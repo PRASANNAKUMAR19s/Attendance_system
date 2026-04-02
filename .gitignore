@@ -1,0 +1,45 @@
+# ─── Python ───────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+*.pyo
+.Python
+
+# ─── Virtual environments ─────────────────────────────────────────────────────
+.venv/
+venv/
+ENV/
+env/
+
+# ─── Environment / secrets ────────────────────────────────────────────────────
+.env
+serviceAccountKey.json
+*.pem
+*.key
+
+# ─── Testing / coverage ───────────────────────────────────────────────────────
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# ─── IDE / OS ────────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.DS_Store
+Thumbs.db
+
+# ─── Generated files ──────────────────────────────────────────────────────────
+# Keep reports/ and attendance/ directories but ignore their contents
+reports/*.pdf
+reports/*.png
+defaulters_list.csv
+
+# ─── Docker ───────────────────────────────────────────────────────────────────
+.docker/
