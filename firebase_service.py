@@ -18,12 +18,40 @@ import csv
 import glob
 import logging
 import os
+import re
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 import config as _config
 
 logger = logging.getLogger(__name__)
+
+# Date strings accepted in file paths must be exactly YYYY-MM-DD (digits only).
+_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+
+def _safe_date(date: Optional[str]) -> Optional[str]:
+    """Validate and normalise *date* to a YYYY-MM-DD string safe for file paths.
+
+    Parses the string through ``datetime.strptime`` and re-formats it with
+    ``strftime``, so the returned value is always produced by the standard
+    library rather than coming directly from user input.  This removes the
+    taint that static analysis tools track from external input.
+
+    Raises ValueError for any string that does not match YYYY-MM-DD.
+    """
+    if date is None:
+        return None
+    if not _DATE_RE.match(date):
+        raise ValueError(f"Invalid date format: {date!r}. Expected YYYY-MM-DD.")
+    # Re-derive the string from a parsed datetime to produce a trusted value.
+    parsed = datetime.strptime(date, "%Y-%m-%d")
+    return parsed.strftime("%Y-%m-%d")
+
+# ---------------------------------------------------------------------------
+# Helper: initialise Firebase Admin SDK once
+# ---------------------------------------------------------------------------
+_firebase_app = None
 
 
 def _init_firebase() -> bool:
@@ -378,9 +406,12 @@ class FirebaseService:
         marked_time: str,
         status: str,
     ) -> None:
-        attendance_dir = _config.ATTENDANCE_DIR
+        safe = _safe_date(date)  # Validates date is YYYY-MM-DD before path use
+        attendance_dir = os.path.realpath(_config.ATTENDANCE_DIR)
         os.makedirs(attendance_dir, exist_ok=True)
-        path = os.path.join(attendance_dir, f"attendance_{date}.csv")
+        path = os.path.realpath(os.path.join(attendance_dir, f"attendance_{safe}.csv"))
+        if not path.startswith(attendance_dir + os.sep) and path != attendance_dir:
+            raise ValueError("Unsafe attendance file path detected.")
         file_exists = os.path.isfile(path)
         with open(path, "a", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
@@ -395,17 +426,21 @@ class FirebaseService:
         date: Optional[str] = None,
         reg_no: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
-        attendance_dir = _config.ATTENDANCE_DIR
+        safe = _safe_date(date)  # Validates date is YYYY-MM-DD before path use
+        attendance_dir = os.path.realpath(_config.ATTENDANCE_DIR)
         pattern = (
-            os.path.join(attendance_dir, f"attendance_{date}.csv")
-            if date
+            os.path.join(attendance_dir, f"attendance_{safe}.csv")
+            if safe
             else os.path.join(attendance_dir, "attendance_*.csv")
         )
         records: List[Dict[str, Any]] = []
         for path in sorted(glob.glob(pattern)):
-            if not os.path.isfile(path):
+            real_path = os.path.realpath(path)
+            if not real_path.startswith(attendance_dir + os.sep):
+                continue  # Skip any path that escapes the attendance directory
+            if not os.path.isfile(real_path):
                 continue
-            with open(path, newline="", encoding="utf-8") as f:
+            with open(real_path, newline="", encoding="utf-8") as f:
                 for row in csv.DictReader(f):
                     r = {
                         "reg_no": row.get("RegNo", row.get("reg_no", "")),

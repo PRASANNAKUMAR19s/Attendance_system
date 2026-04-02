@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 from datetime import datetime, timezone
 from functools import wraps
 from typing import Any, Dict, List, Tuple
@@ -248,6 +249,17 @@ def _validate_str(value: Any, name: str, max_len: int = 256) -> str:
     return value.strip()
 
 
+_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+
+def _validate_date(value: Any, name: str = "date") -> str:
+    """Validate YYYY-MM-DD date string to prevent path traversal."""
+    s = _validate_str(value, name, 10)
+    if not _DATE_RE.match(s):
+        raise ValueError(f"'{name}' must be YYYY-MM-DD format.")
+    return s
+
+
 # ---------------------------------------------------------------------------
 # Health check
 # ---------------------------------------------------------------------------
@@ -341,7 +353,7 @@ class Student(Resource):
         data = request.get_json(silent=True) or {}
         safe: Dict[str, Any] = {}
         if "name" in data:
-            safe["name"] = _validate_str(data["name"], "name", 100) if data["name"] else ""
+            safe["name"] = _validate_str(data["name"], "name", 100)
         if "department" in data:
             safe["department"] = str(data["department"])[:100]
         if "year" in data:
@@ -374,8 +386,12 @@ class AttendanceList(Resource):
     @ns_attendance.marshal_list_with(attendance_model)
     def get(self):
         """Retrieve attendance records (requires JWT)."""
-        date   = request.args.get("date")
-        reg_no = request.args.get("reg_no")
+        raw_date = request.args.get("date")
+        reg_no   = request.args.get("reg_no")
+        try:
+            date = _validate_date(raw_date) if raw_date else None
+        except ValueError as exc:
+            api.abort(400, str(exc))
         return svc.get_attendance(date=date, reg_no=reg_no)
 
     @jwt_required()
@@ -389,10 +405,11 @@ class AttendanceList(Resource):
             name   = _validate_str(data.get("name", ""),   "name",   100)
             period = _validate_str(data.get("period", ""), "period",  50)
             status = _validate_str(data.get("status", ""), "status",  20)
+            raw_date = data.get("date")
+            date = _validate_date(raw_date) if raw_date else datetime.now().strftime("%Y-%m-%d")
         except ValueError as exc:
             api.abort(400, str(exc))
 
-        date = data.get("date") or datetime.now().strftime("%Y-%m-%d")
         record = svc.mark_attendance(reg_no, name, date, period, status)
         return record, 201
 
@@ -412,8 +429,12 @@ class LateReasonList(Resource):
     @ns_attendance.doc(params={"date": "Filter by date", "reg_no": "Filter by student"})
     def get(self):
         """Get late-reason records (requires JWT)."""
-        date   = request.args.get("date")
-        reg_no = request.args.get("reg_no")
+        raw_date = request.args.get("date")
+        reg_no   = request.args.get("reg_no")
+        try:
+            date = _validate_date(raw_date) if raw_date else None
+        except ValueError as exc:
+            api.abort(400, str(exc))
         return svc.get_late_reasons(date=date, reg_no=reg_no)
 
     @jwt_required()
@@ -426,10 +447,11 @@ class LateReasonList(Resource):
             name   = _validate_str(data.get("name", ""),   "name",   100)
             period = _validate_str(data.get("period", ""), "period",  50)
             reason = _validate_str(data.get("reason", ""), "reason",  500)
+            raw_date = data.get("date")
+            date = _validate_date(raw_date) if raw_date else datetime.now().strftime("%Y-%m-%d")
         except ValueError as exc:
             api.abort(400, str(exc))
 
-        date = data.get("date") or datetime.now().strftime("%Y-%m-%d")
         updated_by = str(data.get("updated_by", "Tutor"))[:50]
         record = svc.add_late_reason(reg_no, name, date, period, reason, updated_by)
         return record, 201
@@ -464,7 +486,11 @@ class ReportSummary(Resource):
         Generate an attendance summary report (requires JWT).
         Returns per-student percentages and defaulter status.
         """
-        date = request.args.get("date")
+        raw_date = request.args.get("date")
+        try:
+            date = _validate_date(raw_date) if raw_date else None
+        except ValueError as exc:
+            api.abort(400, str(exc))
         records = svc.get_attendance(date=date)
         students = {s["reg_no"]: s["name"] for s in svc.get_students()}
 
