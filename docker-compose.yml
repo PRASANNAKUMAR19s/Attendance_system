@@ -1,0 +1,67 @@
+version: "3.9"
+
+# ─── Attendance System — Docker Compose ──────────────────────────────────────
+# Usage:
+#   docker compose up --build          # start all services
+#   docker compose up --build api      # start only the REST API
+#   docker compose down                # stop and remove containers
+#
+# Copy .env.example → .env and fill in real values before running.
+
+services:
+  # ── REST API ────────────────────────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: attendance-system-api:latest
+    container_name: attendance_api
+    restart: unless-stopped
+    ports:
+      - "${API_PORT:-5001}:5001"
+    env_file:
+      - .env
+    volumes:
+      # Persist local CSV files and generated reports outside the container
+      - ./attendance:/app/attendance
+      - ./reports:/app/reports
+      - ./dataset:/app/dataset
+      - ./trainer:/app/trainer
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import urllib.request; urllib.request.urlopen('http://localhost:5001/api/health/')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - attendance_net
+
+  # ── Web Portal ───────────────────────────────────────────────────────────────
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: attendance-system-web:latest
+    container_name: attendance_web
+    restart: unless-stopped
+    command: ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2",
+              "--timeout", "120", "8_web_portal:app"]
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    volumes:
+      - ./attendance:/app/attendance
+      - ./reports:/app/reports
+      - ./dataset:/app/dataset
+      - ./trainer:/app/trainer
+    networks:
+      - attendance_net
+    depends_on:
+      api:
+        condition: service_healthy
+
+networks:
+  attendance_net:
+    driver: bridge

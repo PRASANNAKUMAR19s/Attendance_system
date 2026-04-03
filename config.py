@@ -2,7 +2,14 @@
 CONFIG — Class Schedule, Email & System Settings
 =================================================
 Edit this file to change timings, email credentials, etc.
+Environment variables (via .env) override these defaults.
 """
+
+import os
+from dotenv import load_dotenv
+
+# Load .env file if present
+load_dotenv()
 
 # ── Class Periods ──────────────────────────────────────────────────────────────
 # Format: ("Period Name", "HH:MM start", "HH:MM late after", "HH:MM end")
@@ -19,16 +26,16 @@ PERIODS = [
 ]
 
 # ── Email Settings ─────────────────────────────────────────────────────────────
-EMAIL_SENDER        = "your_email@gmail.com"       # ← change this
-EMAIL_PASSWORD      = "your_app_password"           # ← Gmail App Password
-TUTOR_EMAIL         = "tutor_email@gmail.com"       # ← change this
-HOD_EMAIL           = "hod_email@gmail.com"         # ← change this
+EMAIL_SENDER        = os.environ.get("EMAIL_SENDER",   "your_email@gmail.com")
+EMAIL_PASSWORD      = os.environ.get("EMAIL_PASSWORD", "your_app_password")
+TUTOR_EMAIL         = os.environ.get("TUTOR_EMAIL",    "tutor_email@gmail.com")
+HOD_EMAIL           = os.environ.get("HOD_EMAIL",      "hod_email@gmail.com")
 
 # ── Department Info (for report header) ───────────────────────────────────────
-COLLEGE_NAME        = "Paavai Engineering College (Autonomous)"
-DEPARTMENT          = "Artificial Intelligence & Data Science"
-TUTOR_NAME          = "MR.M.SATHYA SUNDARAM"
-HOD_NAME            = "DR.A.MANIKANDAN"
+COLLEGE_NAME        = os.environ.get("COLLEGE_NAME", "Paavai Engineering College (Autonomous)")
+DEPARTMENT          = os.environ.get("DEPARTMENT",   "Artificial Intelligence & Data Science")
+TUTOR_NAME          = os.environ.get("TUTOR_NAME",   "MR.M.SATHYA SUNDARAM")
+HOD_NAME            = os.environ.get("HOD_NAME",     "DR.A.MANIKANDAN")
 
 # ── Paths ──────────────────────────────────────────────────────────────────────
 CASCADE_PATH        = "haarcascade/haarcascade_frontalface_default.xml"
@@ -38,7 +45,22 @@ ATTENDANCE_DIR      = "attendance"
 REPORTS_DIR         = "reports"
 LATE_REASONS_FILE   = "late_reasons.csv"
 STUDENTS_FILE       = "students.csv"
+DATASET_DIR         = "dataset"
 
 # ── Face Recognition ──────────────────────────────────────────────────────────
-CONFIDENCE_THRESHOLD = 70
+CONFIDENCE_THRESHOLD = int(os.environ.get("CONFIDENCE_THRESHOLD", 70))
 MIN_FACE_SIZE        = (60, 60)
+
+# ── API / Web Security ─────────────────────────────────────────────────────────
+SECRET_KEY          = os.environ.get("SECRET_KEY",      "change-me-in-production-use-strong-random-key")
+JWT_SECRET_KEY      = os.environ.get("JWT_SECRET_KEY",  "change-jwt-secret-in-production")
+TUTOR_USERNAME      = os.environ.get("TUTOR_USERNAME",  "tutor")
+TUTOR_PASSWORD_HASH = os.environ.get("TUTOR_PASSWORD_HASH", "")   # bcrypt hash; empty = use plain fallback
+
+# ── Firebase ──────────────────────────────────────────────────────────────────
+FIREBASE_CREDENTIALS_PATH  = os.environ.get("FIREBASE_CREDENTIALS_PATH", "serviceAccountKey.json")
+FIREBASE_STORAGE_BUCKET     = os.environ.get("FIREBASE_STORAGE_BUCKET",  "")
+USE_FIREBASE                = os.environ.get("USE_FIREBASE", "false").lower() == "true"
+
+# ── Attendance thresholds ──────────────────────────────────────────────────────
+DEFAULTER_THRESHOLD = int(os.environ.get("DEFAULTER_THRESHOLD", 75))

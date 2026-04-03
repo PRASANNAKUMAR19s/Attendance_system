@@ -1,0 +1,59 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helper functions ──────────────────────────────────────────────────────
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isTutor() {
+      return isAuthenticated()
+          && request.auth.token.role == 'tutor';
+    }
+
+    function isAdmin() {
+      return isAuthenticated()
+          && request.auth.token.role == 'admin';
+    }
+
+    function isTutorOrAdmin() {
+      return isTutor() || isAdmin();
+    }
+
+    // ── Students ──────────────────────────────────────────────────────────────
+    // Tutors/admins can read & write; authenticated users can read only.
+    match /students/{regNo} {
+      allow read:  if isAuthenticated();
+      allow write: if isTutorOrAdmin();
+    }
+
+    // ── Attendance ────────────────────────────────────────────────────────────
+    // Any authenticated user can mark attendance; only tutor/admin can delete.
+    match /attendance/{docId} {
+      allow read:   if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if isTutorOrAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ── Late reasons ──────────────────────────────────────────────────────────
+    match /late_reasons/{docId} {
+      allow read:   if isAuthenticated();
+      allow create: if isTutorOrAdmin();
+      allow update: if isTutorOrAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ── Audit logs ────────────────────────────────────────────────────────────
+    match /audit_logs/{docId} {
+      allow read:  if isAdmin();
+      allow write: if false;   // written only via server-side SDK
+    }
+
+    // ── Block everything else ─────────────────────────────────────────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
