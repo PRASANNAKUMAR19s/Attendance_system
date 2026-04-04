@@ -43,3 +43,8 @@ defaulters_list.csv
 
 # ─── Docker ───────────────────────────────────────────────────────────────────
 .docker/
+
+# ─── Dataset / trainer (large binary files) ──────────────────────────────────
+dataset/
+attendance/*.csv
+trainer/trainer.yml

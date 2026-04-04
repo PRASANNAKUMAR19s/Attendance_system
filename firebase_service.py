@@ -63,6 +63,16 @@ def _init_firebase() -> bool:
         import firebase_admin  # type: ignore
         from firebase_admin import credentials  # type: ignore
 
+        creds_path = _config.FIREBASE_CREDENTIALS_PATH
+        if not os.path.isfile(creds_path):
+            logger.warning(
+                "Firebase credentials file '%s' not found.  "
+                "Falling back to CSV storage.",
+                creds_path,
+            )
+            return False
+
+        cred = credentials.Certificate(creds_path)
         if not os.path.isfile(_config.FIREBASE_CREDENTIALS_PATH):
             logger.warning(
                 "Firebase credentials file '%s' not found.  "

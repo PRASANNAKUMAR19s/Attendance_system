@@ -68,6 +68,7 @@ jobs:
     needs: test
     permissions:
       contents: read
+      actions: write
 
     steps:
       - name: Checkout code
