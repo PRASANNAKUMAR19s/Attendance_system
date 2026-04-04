@@ -1,0 +1,46 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ── Helper functions ──────────────────────────────────────────────────────
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isTutorOrAdmin() {
+      return isAuthenticated()
+          && (request.auth.token.role == 'tutor'
+           || request.auth.token.role == 'admin');
+    }
+
+    function isImageFile() {
+      return request.resource.contentType.matches('image/.*');
+    }
+
+    function isFileSizeOk() {
+      // 5 MB max per face image
+      return request.resource.size <= 5 * 1024 * 1024;
+    }
+
+    // ── Face dataset images ───────────────────────────────────────────────────
+    match /dataset/{regNo}/{filename} {
+      // Anyone authenticated can read face images
+      allow read: if isAuthenticated();
+      // Only tutors/admins can upload or delete
+      allow create: if isTutorOrAdmin() && isImageFile() && isFileSizeOk();
+      allow delete: if isTutorOrAdmin();
+    }
+
+    // ── Generated reports (PDFs) ──────────────────────────────────────────────
+    match /reports/{filename} {
+      allow read:   if isTutorOrAdmin();
+      allow create: if isTutorOrAdmin();
+      allow delete: if isTutorOrAdmin();
+    }
+
+    // ── Block all other paths ─────────────────────────────────────────────────
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
