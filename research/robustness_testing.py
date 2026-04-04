@@ -6,6 +6,7 @@ Test models under various real-world conditions
 import cv2
 import numpy as np
 import os
+import json
 import csv
 from pathlib import Path
 from config_research import *
@@ -13,9 +14,19 @@ from config_research import *
 class RobustnessTesting:
     def __init__(self):
         self.lbph = cv2.face.LBPHFaceRecognizer_create()
+        self.student_id_map = {}
+        self.load_student_mapping()
+        
         if os.path.exists(str(LBPH_TRAINER_PATH)):
             self.lbph.read(str(LBPH_TRAINER_PATH))
         self.results = []
+    
+    def load_student_mapping(self):
+        """Load student ID mapping from file"""
+        mapping_file = RESULTS_DIR / "student_mapping.json"
+        if mapping_file.exists():
+            with open(mapping_file, 'r') as f:
+                self.student_id_map = json.load(f)
     
     def apply_brightness(self, img, brightness_factor):
         """Adjust image brightness"""
@@ -48,7 +59,13 @@ class RobustnessTesting:
     def test_condition(self, img, label, condition_name):
         """Test image under specific condition"""
         try:
-            pred_label, confidence = self.lbph.predict(img)
+            # Convert to grayscale if needed
+            if len(img.shape) == 3:
+                gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            else:
+                gray_img = img
+            
+            pred_label, confidence = self.lbph.predict(gray_img)
             is_correct = (pred_label == label)
             
             return {
@@ -66,25 +83,31 @@ class RobustnessTesting:
         print("Running Robustness Tests...")
         
         for img, label in zip(test_images, test_labels):
+            # Convert to grayscale if needed
+            if len(img.shape) == 3:
+                gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            else:
+                gray_img = img
+            
             # Test normal image
-            result = self.test_condition(img, label, 'normal')
+            result = self.test_condition(gray_img, label, 'normal')
             if result:
                 self.results.append(result)
             
             # Test low light
-            low_light_img = cv2.convertScaleAbs(img, alpha=0.5, beta=0)
+            low_light_img = cv2.convertScaleAbs(gray_img, alpha=0.5, beta=0)
             result = self.test_condition(low_light_img, label, 'low_light')
             if result:
                 self.results.append(result)
             
             # Test rotated
-            rotated_img = self.rotate_image(img, 15)
+            rotated_img = self.rotate_image(gray_img, 15)
             result = self.test_condition(rotated_img, label, 'rotated_15')
             if result:
                 self.results.append(result)
             
             # Test with occlusion
-            occluded_img = self.apply_occlusion(img, 'mask')
+            occluded_img = self.apply_occlusion(gray_img, 'mask')
             result = self.test_condition(occluded_img, label, 'occluded')
             if result:
                 self.results.append(result)
@@ -109,7 +132,7 @@ class RobustnessTesting:
         
         # Calculate statistics by condition
         print("\n=== Robustness Test Results ===")
-        conditions = set(r['condition'] for r in self.results)
+        conditions = sorted(set(r['condition'] for r in self.results))
         for condition in conditions:
             condition_results = [r for r in self.results if r['condition'] == condition]
             correct_count = sum(1 for r in condition_results if r['correct'])
@@ -121,22 +144,32 @@ def main():
     test_images = []
     test_labels = []
     
+    tester = RobustnessTesting()
+    
     test_path = DATA_DIR / "test"
     if test_path.exists():
+        face_cascade = cv2.CascadeClassifier(str(HAARCASCADE_PATH))
+        
         for student_id in os.listdir(test_path):
             student_dir = test_path / student_id
             if student_dir.is_dir():
+                numeric_id = tester.student_id_map.get(student_id, -1)
+                if numeric_id == -1:
+                    print(f"⚠️  Unknown student: {student_id}")
+                    continue
+                
                 for image_file in os.listdir(student_dir):
                     image_path = student_dir / image_file
                     img = cv2.imread(str(image_path))
                     if img is not None:
                         test_images.append(img)
-                        test_labels.append(int(student_id))
+                        test_labels.append(numeric_id)
     
     if test_images:
-        tester = RobustnessTesting()
         tester.run_robustness_tests(test_images, test_labels)
         tester.save_results()
+    else:
+        print("❌ No test images found!")
 
 if __name__ == "__main__":
     main()
