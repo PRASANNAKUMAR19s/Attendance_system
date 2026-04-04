@@ -73,6 +73,15 @@ def _init_firebase() -> bool:
             return False
 
         cred = credentials.Certificate(creds_path)
+        if not os.path.isfile(_config.FIREBASE_CREDENTIALS_PATH):
+            logger.warning(
+                "Firebase credentials file '%s' not found.  "
+                "Falling back to CSV storage.",
+                _config.FIREBASE_CREDENTIALS_PATH,
+            )
+            return False
+
+        cred = credentials.Certificate(_config.FIREBASE_CREDENTIALS_PATH)
         kwargs: Dict[str, Any] = {}
         if _config.FIREBASE_STORAGE_BUCKET:
             kwargs["storageBucket"] = _config.FIREBASE_STORAGE_BUCKET
