@@ -1,3 +1,3 @@
 Model,Accuracy,Speed (s/image),Total Time (s)
-LBPH,0.9286,0.478691,6.7017
-EigenFaces,0.0000,0.000548,0.0077
+LBPH,0.9000,0.412356,12.3707
+EigenFaces,0.0000,0.000000,0.0000
