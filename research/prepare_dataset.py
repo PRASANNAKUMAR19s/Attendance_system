@@ -1,0 +1,88 @@
+"""
+Step 0: Prepare Dataset
+Splits raw student image folders from dataset/ into train (80%) and test (20%) subsets.
+
+Usage:
+    python research/prepare_dataset.py
+"""
+
+import os
+import shutil
+import random
+
+DATASET_DIR = os.path.join(os.path.dirname(__file__), '..', 'dataset')
+TRAIN_DIR = os.path.join(DATASET_DIR, 'train')
+TEST_DIR = os.path.join(DATASET_DIR, 'test')
+
+IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.bmp', '.pgm'}
+TRAIN_RATIO = 0.8
+RANDOM_SEED = 42
+
+
+def is_image(filename):
+    return os.path.splitext(filename.lower())[1] in IMAGE_EXTENSIONS
+
+
+def prepare_split():
+    dataset_dir = os.path.normpath(DATASET_DIR)
+    train_dir = os.path.normpath(TRAIN_DIR)
+    test_dir = os.path.normpath(TEST_DIR)
+
+    # Collect student folders (skip train/test subdirs themselves)
+    skip = {os.path.normpath(d) for d in (train_dir, test_dir)}
+    student_folders = [
+        entry.name
+        for entry in os.scandir(dataset_dir)
+        if entry.is_dir() and os.path.normpath(entry.path) not in skip
+    ]
+
+    if not student_folders:
+        print("No student folders found in dataset/. Nothing to do.")
+        return
+
+    student_folders.sort()
+    random.seed(RANDOM_SEED)
+
+    total_train = 0
+    total_test = 0
+
+    print(f"{'Student':<30} {'Total':>7} {'Train':>7} {'Test':>7}")
+    print("-" * 55)
+
+    for student in student_folders:
+        src_folder = os.path.join(dataset_dir, student)
+        images = sorted(f for f in os.listdir(src_folder) if is_image(f))
+
+        if not images:
+            print(f"{student:<30} {'0':>7} {'0':>7} {'0':>7}  (no images, skipped)")
+            continue
+
+        random.shuffle(images)
+        if len(images) >= 2:
+            # Ensure at least one image in both train and test sets.
+            split_idx = max(1, min(len(images) - 1, int(len(images) * TRAIN_RATIO)))
+        else:
+            split_idx = len(images)  # single image: all goes to train, test stays empty
+        train_images = images[:split_idx]
+        test_images = images[split_idx:]
+
+        for subset, imgs in (('train', train_images), ('test', test_images)):
+            dest = os.path.join(dataset_dir, subset, student)
+            os.makedirs(dest, exist_ok=True)
+            for img in imgs:
+                # Copy (not move) so that the original dataset/ images remain
+                # available for the main attendance system scripts.
+                shutil.copy2(os.path.join(src_folder, img), os.path.join(dest, img))
+
+        total_train += len(train_images)
+        total_test += len(test_images)
+        print(f"{student:<30} {len(images):>7} {len(train_images):>7} {len(test_images):>7}")
+
+    print("-" * 55)
+    print(f"{'TOTAL':<30} {total_train + total_test:>7} {total_train:>7} {total_test:>7}")
+    print(f"\nTrain folder : {train_dir}")
+    print(f"Test folder  : {test_dir}")
+
+
+if __name__ == '__main__':
+    prepare_split()

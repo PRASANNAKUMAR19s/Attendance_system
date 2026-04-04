@@ -46,6 +46,9 @@ Generate synthetic test datasets:
 ## How to Run
 
 ```bash
+# 0. Prepare dataset (split raw images into train/test folders)
+python research/prepare_dataset.py
+
 # 1. Generate synthetic datasets
 python research/dataset_generator.py
 
