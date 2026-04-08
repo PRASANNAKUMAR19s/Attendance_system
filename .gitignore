@@ -41,6 +41,9 @@ reports/*.pdf
 reports/*.png
 defaulters_list.csv
 
+# Web application runtime database (generated at startup)
+*.db
+
 # ─── Docker ───────────────────────────────────────────────────────────────────
 .docker/
 

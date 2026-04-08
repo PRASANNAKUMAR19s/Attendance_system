@@ -1,0 +1,71 @@
+/* ── responsive.css — Mobile-responsive adjustments ─────────────────────── */
+
+/* ── Small screens (≤ 576 px) ─────────────────────────────────────────── */
+@media (max-width: 576px) {
+  .navbar-brand span {
+    font-size: 0.95rem;
+  }
+
+  .card-body {
+    padding: 1rem;
+  }
+
+  h2 {
+    font-size: 1.4rem;
+  }
+
+  /* Stack stat cards vertically */
+  .row.g-3 > [class*="col-sm-6"] {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+
+  /* Hide less important table columns */
+  #studentsTable th:nth-child(5),
+  #studentsTable td:nth-child(5) {
+    display: none;
+  }
+
+  /* Full-width buttons */
+  .btn-group-responsive .btn {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+
+  /* Camera feed full width */
+  #cameraFeed {
+    width: 100% !important;
+  }
+}
+
+/* ── Medium screens (577 px – 768 px) ─────────────────────────────────── */
+@media (min-width: 577px) and (max-width: 768px) {
+  .container-fluid {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+/* ── Print styles ──────────────────────────────────────────────────────── */
+@media print {
+  .navbar,
+  .footer,
+  .btn,
+  #searchInput {
+    display: none !important;
+  }
+
+  body {
+    background: #fff;
+  }
+
+  .card {
+    box-shadow: none !important;
+    border: 1px solid #dee2e6 !important;
+  }
+
+  .table-responsive {
+    max-height: none;
+    overflow: visible;
+  }
+}
