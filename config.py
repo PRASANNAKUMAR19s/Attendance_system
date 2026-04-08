@@ -11,6 +11,14 @@ from dotenv import load_dotenv
 # Load .env file if present
 load_dotenv()
 
+# ── Web Application ────────────────────────────────────────────────────────────
+DATABASE_PATH       = os.environ.get("DATABASE_PATH", "attendance_web.db")
+UPLOAD_FOLDER       = os.environ.get("UPLOAD_FOLDER", "dataset")
+MAX_CONTENT_LENGTH  = 16 * 1024 * 1024   # 16 MB max file upload
+ALLOWED_EXTENSIONS  = {"png", "jpg", "jpeg", "gif"}
+WEB_PORT            = int(os.environ.get("WEB_PORT", 5000))
+PHOTOS_PER_STUDENT  = 13   # number of angles captured during registration
+
 # ── Class Periods ──────────────────────────────────────────────────────────────
 # Format: ("Period Name", "HH:MM start", "HH:MM late after", "HH:MM end")
 PERIODS = [

@@ -1,0 +1,99 @@
+/* ── style.css — Main application stylesheet ──────────────────────────────── */
+
+/* Variables */
+:root {
+  --primary:   #0d6efd;
+  --success:   #198754;
+  --warning:   #ffc107;
+  --danger:    #dc3545;
+  --info:      #0dcaf0;
+  --bg-light:  #f8f9fa;
+  --border:    #dee2e6;
+  --text-muted: #6c757d;
+  --font-sans: "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+
+/* Base */
+body {
+  font-family: var(--font-sans);
+  background-color: #f0f2f5;
+  color: #212529;
+}
+
+/* Navbar */
+.navbar-brand {
+  font-size: 1.1rem;
+  letter-spacing: 0.02em;
+}
+
+/* Cards */
+.card {
+  border-radius: 0.75rem;
+}
+
+.card-header {
+  border-radius: 0.75rem 0.75rem 0 0 !important;
+  font-size: 0.9rem;
+}
+
+/* Tables */
+.table th {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  border-bottom: 2px solid var(--border);
+}
+
+.table td {
+  vertical-align: middle;
+}
+
+/* Badges */
+.badge {
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+/* Buttons */
+.btn {
+  border-radius: 0.5rem;
+  font-weight: 500;
+}
+
+/* Form controls */
+.form-control,
+.form-select {
+  border-radius: 0.5rem;
+}
+
+.form-control:focus,
+.form-select:focus {
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.2);
+}
+
+/* Footer */
+.footer {
+  font-size: 0.8rem;
+}
+
+/* Scrollable table wrapper */
+.table-responsive {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+/* Smooth transitions */
+.card,
+.btn,
+.form-control {
+  transition: all 0.15s ease-in-out;
+}
+
+/* Sticky table header */
+.table-responsive .table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #f8f9fa;
+}

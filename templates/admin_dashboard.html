@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard — AI Attendance System{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}" />
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="fw-bold mb-0"><i class="bi bi-speedometer2 me-2"></i>Admin Dashboard</h2>
+    <p class="text-muted mb-0">Manage registered students for AI &amp; DS department</p>
+  </div>
+  <a href="{{ url_for('admin.register_student') }}" class="btn btn-primary">
+    <i class="bi bi-person-plus me-1"></i> Register Student
+  </a>
+</div>
+
+<!-- Stats cards -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-xl-3">
+    <div class="card border-0 shadow-sm bg-primary text-white h-100">
+      <div class="card-body d-flex align-items-center gap-3">
+        <i class="bi bi-people-fill fs-1 opacity-75"></i>
+        <div>
+          <div class="fs-2 fw-bold">{{ total }}</div>
+          <div class="small opacity-75">Total Students</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="card border-0 shadow-sm bg-success text-white h-100">
+      <div class="card-body d-flex align-items-center gap-3">
+        <i class="bi bi-camera-fill fs-1 opacity-75"></i>
+        <div>
+          <div class="fs-2 fw-bold">
+            {{ students | selectattr('photos', 'gt', 0) | list | length }}
+          </div>
+          <div class="small opacity-75">Photos Captured</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="card border-0 shadow-sm bg-warning text-dark h-100">
+      <div class="card-body d-flex align-items-center gap-3">
+        <i class="bi bi-exclamation-circle-fill fs-1 opacity-75"></i>
+        <div>
+          <div class="fs-2 fw-bold">
+            {{ students | selectattr('photos', 'eq', 0) | list | length }}
+          </div>
+          <div class="small opacity-50">Pending Photos</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="card border-0 shadow-sm bg-info text-white h-100">
+      <div class="card-body d-flex align-items-center gap-3">
+        <i class="bi bi-mortarboard-fill fs-1 opacity-75"></i>
+        <div>
+          <div class="fs-2 fw-bold">1</div>
+          <div class="small opacity-75">Department</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Student table -->
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+    <span class="fw-semibold">Registered Students</span>
+    <input type="text" id="searchInput" class="form-control form-control-sm w-auto"
+           placeholder="&#128269; Search students…" style="min-width:200px;" />
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0" id="studentsTable">
+      <thead class="table-light">
+        <tr>
+          <th>#</th>
+          <th>Reg. No.</th>
+          <th>Name</th>
+          <th>Year</th>
+          <th>Email</th>
+          <th>Photos</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in students %}
+        <tr>
+          <td class="text-muted small">{{ loop.index }}</td>
+          <td><code class="text-primary">{{ s.reg_no }}</code></td>
+          <td class="fw-semibold">{{ s.name }}</td>
+          <td>{{ s.year }}</td>
+          <td class="text-muted small">{{ s.email or '—' }}</td>
+          <td>
+            {% if s.photos >= 13 %}
+              <span class="badge bg-success">{{ s.photos }}/13</span>
+            {% elif s.photos > 0 %}
+              <span class="badge bg-warning text-dark">{{ s.photos }}/13</span>
+            {% else %}
+              <span class="badge bg-secondary">0/13</span>
+            {% endif %}
+          </td>
+          <td>
+            <form method="POST"
+                  action="{{ url_for('admin.delete_student', reg_no=s.reg_no) }}"
+                  onsubmit="return confirm('Delete {{ s.name }}? This cannot be undone.');">
+              <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete student">
+                <i class="bi bi-trash"></i>
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="7" class="text-center text-muted py-4">
+            No students registered yet.
+            <a href="{{ url_for('admin.register_student') }}">Register the first student →</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Live search filter
+  document.getElementById("searchInput").addEventListener("input", function () {
+    const q = this.value.toLowerCase();
+    document.querySelectorAll("#studentsTable tbody tr").forEach(function (row) {
+      row.style.display = row.textContent.toLowerCase().includes(q) ? "" : "none";
+    });
+  });
+</script>
+{% endblock %}

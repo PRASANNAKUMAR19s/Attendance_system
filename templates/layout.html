@@ -1,0 +1,25 @@
+{% macro stat_card(title, value, icon, color="primary") %}
+<div class="card border-0 shadow-sm bg-{{ color }} text-white h-100">
+  <div class="card-body d-flex align-items-center gap-3">
+    <i class="bi bi-{{ icon }} fs-1 opacity-75"></i>
+    <div>
+      <div class="fs-2 fw-bold">{{ value }}</div>
+      <div class="small opacity-75">{{ title }}</div>
+    </div>
+  </div>
+</div>
+{% endmacro %}
+
+{% macro breadcrumb(items) %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    {% for label, url in items %}
+      {% if loop.last %}
+        <li class="breadcrumb-item active">{{ label }}</li>
+      {% else %}
+        <li class="breadcrumb-item"><a href="{{ url }}">{{ label }}</a></li>
+      {% endif %}
+    {% endfor %}
+  </ol>
+</nav>
+{% endmacro %}
