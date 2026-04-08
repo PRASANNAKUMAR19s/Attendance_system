@@ -19,6 +19,10 @@ ALLOWED_EXTENSIONS  = {"png", "jpg", "jpeg", "gif"}
 WEB_PORT            = int(os.environ.get("WEB_PORT", 5000))
 PHOTOS_PER_STUDENT  = 13   # number of angles captured during registration
 
+# Default plain-text password used only when TUTOR_PASSWORD_HASH is empty.
+# Override with TUTOR_PASSWORD env var in production.
+TUTOR_PASSWORD      = os.environ.get("TUTOR_PASSWORD", "paavai123")
+
 # ── Class Periods ──────────────────────────────────────────────────────────────
 # Format: ("Period Name", "HH:MM start", "HH:MM late after", "HH:MM end")
 PERIODS = [

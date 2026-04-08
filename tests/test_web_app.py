@@ -24,7 +24,7 @@ os.environ.setdefault("USE_FIREBASE", "false")
 
 # Admin credentials used in login tests — matches the default TUTOR_USERNAME above.
 _ADMIN_USER = os.environ.get("TUTOR_USERNAME", "tutor")
-_ADMIN_PASS = "paavai123"
+_ADMIN_PASS = os.environ.get("TUTOR_PASSWORD", "paavai123")
 
 
 @pytest.fixture(scope="session")

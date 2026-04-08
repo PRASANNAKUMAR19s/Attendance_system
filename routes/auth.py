@@ -83,13 +83,14 @@ def login():
         session.permanent    = True
 
         logger.info("User %s logged in.", username)
-        # Only allow relative redirects to prevent open-redirect attacks.
+        # Only allow same-origin relative redirects (must start with /) to
+        # prevent open-redirect attacks.  Any external URL is ignored.
         next_param = request.args.get("next", "")
         parsed = urlsplit(next_param)
-        if parsed.scheme or parsed.netloc:
+        if parsed.scheme or parsed.netloc or not next_param.startswith("/"):
             next_url = url_for("admin.dashboard")
         else:
-            next_url = next_param or url_for("admin.dashboard")
+            next_url = next_param
         return redirect(next_url)
 
     return render_template("login.html")

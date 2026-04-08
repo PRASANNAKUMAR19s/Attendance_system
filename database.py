@@ -81,7 +81,7 @@ def _create_default_admin(db: sqlite3.Connection) -> None:
     # Use the hashed password from config if provided; otherwise hash the plain default.
     stored_hash: str = _config.TUTOR_PASSWORD_HASH
     if not stored_hash:
-        plain = "paavai123"
+        plain = _config.TUTOR_PASSWORD
         stored_hash = bcrypt.hashpw(plain.encode(), bcrypt.gensalt()).decode()
 
     db.execute(
