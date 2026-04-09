@@ -70,8 +70,8 @@ def close_db(exception: Optional[Exception] = None) -> None:
 # Initialisation
 # ---------------------------------------------------------------------------
 
-def _create_default_admin(db: sqlite3.Connection) -> None:
-    """Create the default admin account if no users exist yet."""
+def _create_default_tutor(db: sqlite3.Connection) -> None:
+    """Create the default tutor account if no users exist yet."""
     cursor = db.execute("SELECT COUNT(*) FROM users")
     count = cursor.fetchone()[0]
     if count > 0:
@@ -85,11 +85,11 @@ def _create_default_admin(db: sqlite3.Connection) -> None:
         stored_hash = bcrypt.hashpw(plain.encode(), bcrypt.gensalt()).decode()
 
     db.execute(
-        "INSERT INTO users (username, password_hash, role, full_name) VALUES (?, ?, 'admin', ?)",
-        (username, stored_hash, "Administrator"),
+        "INSERT INTO users (username, password_hash, role, full_name) VALUES (?, ?, ?, ?)",
+        (username, stored_hash, "tutor", "Administrator"),
     )
     db.commit()
-    logger.info("Created default admin user: %s", username)
+    logger.info("Created default tutor user: %s with role: tutor", username)
 
 
 def init_db(app: Flask) -> None:
@@ -102,7 +102,7 @@ def init_db(app: Flask) -> None:
         try:
             db.executescript(_SCHEMA)
             db.commit()
-            _create_default_admin(db)
+            _create_default_tutor(db)
         finally:
             db.close()
 
