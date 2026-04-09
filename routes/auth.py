@@ -56,10 +56,20 @@ def get_current_user() -> User | None:
 # Routes
 # ---------------------------------------------------------------------------
 
+def _default_dashboard_url(role: str) -> str:
+    """Return the default post-login URL based on the user's role."""
+    if role in ("tutor", "hod"):
+        return url_for("faculty.dashboard")
+    if role == "student":
+        return url_for("student_portal.dashboard")
+    # 'admin' and any other role → admin dashboard
+    return url_for("admin.dashboard")
+
+
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
     if "user_id" in session:
-        return redirect(url_for("admin.dashboard"))
+        return redirect(_default_dashboard_url(session.get("role", "admin")))
 
     if request.method == "POST":
         username = request.form.get("username", "").strip()
@@ -88,7 +98,7 @@ def login():
         next_param = request.args.get("next", "")
         parsed = urlsplit(next_param)
         if parsed.scheme or parsed.netloc or not next_param.startswith("/"):
-            next_url = url_for("admin.dashboard")
+            next_url = _default_dashboard_url(user.role)
         else:
             next_url = next_param
         return redirect(next_url)
