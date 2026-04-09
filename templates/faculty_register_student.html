@@ -1,0 +1,108 @@
+{% extends "faculty_base.html" %}
+{% block title %}Register Student — Faculty Portal{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="fw-bold mb-0">
+      <i class="bi bi-person-plus me-2 text-faculty"></i>Register New Student
+    </h2>
+    <p class="text-muted mb-0">Add a new student to the attendance system</p>
+  </div>
+  <a href="{{ url_for('faculty.dashboard') }}" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
+  </a>
+</div>
+
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white py-3 fw-semibold">
+        <i class="bi bi-person-badge me-1 text-faculty"></i> Student Details
+      </div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('faculty.register_student') }}"
+              enctype="multipart/form-data" novalidate>
+          <div class="mb-3">
+            <label for="reg_no" class="form-label fw-semibold">
+              Register Number <span class="text-danger">*</span>
+            </label>
+            <input type="text" id="reg_no" name="reg_no" class="form-control"
+                   placeholder="e.g. CS001 or 622123207001"
+                   value="{{ form_data.reg_no or '' }}" required />
+            <div class="form-text">Unique student register number (used as login username)</div>
+          </div>
+
+          <div class="mb-3">
+            <label for="name" class="form-label fw-semibold">
+              Full Name <span class="text-danger">*</span>
+            </label>
+            <input type="text" id="name" name="name" class="form-control"
+                   placeholder="e.g. JOHN DOE"
+                   value="{{ form_data.name or '' }}" required />
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label for="department" class="form-label fw-semibold">Department</label>
+              <select id="department" name="department" class="form-select">
+                <option value="AI&DS" {% if (form_data.department or 'AI&DS') == 'AI&DS' %}selected{% endif %}>AI &amp; Data Science</option>
+                <option value="CSE" {% if form_data.department == 'CSE' %}selected{% endif %}>Computer Science</option>
+                <option value="ECE" {% if form_data.department == 'ECE' %}selected{% endif %}>Electronics &amp; Communication</option>
+                <option value="MECH" {% if form_data.department == 'MECH' %}selected{% endif %}>Mechanical Engineering</option>
+                <option value="CIVIL" {% if form_data.department == 'CIVIL' %}selected{% endif %}>Civil Engineering</option>
+                <option value="EEE" {% if form_data.department == 'EEE' %}selected{% endif %}>Electrical Engineering</option>
+                <option value="IT" {% if form_data.department == 'IT' %}selected{% endif %}>Information Technology</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label for="year" class="form-label fw-semibold">Year</label>
+              <select id="year" name="year" class="form-select">
+                <option value="1" {% if (form_data.year or '1') == '1' %}selected{% endif %}>1st Year</option>
+                <option value="2" {% if form_data.year == '2' %}selected{% endif %}>2nd Year</option>
+                <option value="3" {% if form_data.year == '3' %}selected{% endif %}>3rd Year</option>
+                <option value="4" {% if form_data.year == '4' %}selected{% endif %}>4th Year</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label for="email" class="form-label fw-semibold">Email</label>
+              <input type="email" id="email" name="email" class="form-control"
+                     placeholder="student@example.com"
+                     value="{{ form_data.email or '' }}" />
+            </div>
+            <div class="col-md-6">
+              <label for="phone" class="form-label fw-semibold">Phone</label>
+              <input type="tel" id="phone" name="phone" class="form-control"
+                     placeholder="+91 9999999999"
+                     value="{{ form_data.phone or '' }}" />
+            </div>
+          </div>
+
+          {% if photos_required %}
+          <div class="mb-3">
+            <label class="form-label fw-semibold">
+              Face Photos
+              <span class="badge bg-secondary ms-1">{{ photos_required }} angles required</span>
+            </label>
+            <input type="file" name="photos" class="form-control" multiple accept="image/*" />
+            <div class="form-text">Upload up to {{ photos_required }} photos from different angles for face recognition.</div>
+          </div>
+          {% endif %}
+
+          <div class="d-flex gap-2 justify-content-end mt-4">
+            <a href="{{ url_for('faculty.dashboard') }}" class="btn btn-outline-secondary">
+              <i class="bi bi-x me-1"></i> Cancel
+            </a>
+            <button type="submit" class="btn btn-faculty">
+              <i class="bi bi-person-plus me-1"></i> Register Student
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

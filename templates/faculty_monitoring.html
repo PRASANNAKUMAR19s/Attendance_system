@@ -1,0 +1,182 @@
+{% extends "faculty_base.html" %}
+{% block title %}Live Monitoring — Faculty Portal{% endblock %}
+
+{% block extra_css %}
+<style>
+  .camera-placeholder {
+    background: #1a1a2e;
+    border-radius: 8px;
+    min-height: 320px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+  }
+  .status-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .status-on { background-color: #28a745; }
+  .status-off { background-color: #dc3545; }
+  .alert-log { max-height: 300px; overflow-y: auto; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="fw-bold mb-0">
+      <i class="bi bi-camera-video me-2 text-faculty"></i>Live Classroom Monitoring
+    </h2>
+    <p class="text-muted mb-0">Real-time classroom surveillance and environmental status</p>
+  </div>
+  <div class="d-flex gap-2">
+    <span class="badge bg-success py-2 px-3 d-flex align-items-center gap-1" id="liveIndicator">
+      <span class="status-indicator status-on"></span> Live
+    </span>
+    <a href="{{ url_for('faculty.dashboard') }}" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left me-1"></i> Back
+    </a>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <!-- Camera feed -->
+  <div class="col-lg-8">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-3">
+        <span><i class="bi bi-camera-video-fill me-1"></i> Camera Feed — Classroom</span>
+        <div class="d-flex gap-2">
+          <button class="btn btn-sm btn-outline-light" id="toggleCamera">
+            <i class="bi bi-record-circle"></i> Record
+          </button>
+          <button class="btn btn-sm btn-outline-light" id="captureSnapshot">
+            <i class="bi bi-camera"></i> Snapshot
+          </button>
+        </div>
+      </div>
+      <div class="card-body p-2">
+        <div class="camera-placeholder">
+          {% if camera_url %}
+          <img src="{{ camera_url }}" class="img-fluid rounded" alt="Live camera feed" style="max-height:320px;" />
+          {% else %}
+          <div class="text-center">
+            <i class="bi bi-camera-video-off fs-1 mb-2 opacity-50"></i>
+            <p class="mb-0 opacity-75">Camera feed unavailable</p>
+            <p class="small opacity-50">Connect a camera to enable live monitoring</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Classroom status -->
+  <div class="col-lg-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-white py-3 fw-semibold">
+        <i class="bi bi-building me-1 text-faculty"></i> Classroom Status
+      </div>
+      <div class="card-body">
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+            <span><i class="bi bi-lightbulb me-2 text-warning"></i> Lights</span>
+            <span class="badge {% if classroom_status.lights %}bg-success{% else %}bg-secondary{% endif %} rounded-pill">
+              {% if classroom_status.lights %}ON{% else %}OFF{% endif %}
+            </span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+            <span><i class="bi bi-fan me-2 text-info"></i> Fans</span>
+            <span class="badge {% if classroom_status.fans %}bg-success{% else %}bg-secondary{% endif %} rounded-pill">
+              {% if classroom_status.fans %}ON{% else %}OFF{% endif %}
+            </span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+            <span><i class="bi bi-window me-2 text-primary"></i> Windows</span>
+            <span class="badge {% if classroom_status.windows %}bg-success{% else %}bg-secondary{% endif %} rounded-pill">
+              {% if classroom_status.windows %}OPEN{% else %}CLOSED{% endif %}
+            </span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+            <span><i class="bi bi-people me-2 text-success"></i> Occupancy</span>
+            <span class="fw-semibold">{{ classroom_status.occupancy or '—' }}</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+            <span><i class="bi bi-thermometer-half me-2 text-danger"></i> Temperature</span>
+            <span class="fw-semibold">{{ classroom_status.temperature or '—' }}°C</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Alert log -->
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+    <span class="fw-semibold">
+      <i class="bi bi-bell me-1 text-warning"></i> Alert Log
+    </span>
+    <button class="btn btn-sm btn-outline-secondary" id="clearAlerts">
+      <i class="bi bi-trash me-1"></i> Clear
+    </button>
+  </div>
+  <div class="card-body p-0">
+    <div class="alert-log">
+      <table class="table table-sm table-hover mb-0">
+        <thead class="table-light sticky-top">
+          <tr>
+            <th style="width:160px;">Time</th>
+            <th>Event</th>
+            <th style="width:100px;">Type</th>
+          </tr>
+        </thead>
+        <tbody id="alertLogBody">
+          {% for alert in alert_log %}
+          <tr>
+            <td class="text-muted small">{{ alert.timestamp }}</td>
+            <td>{{ alert.message }}</td>
+            <td>
+              <span class="badge bg-{{ alert.level or 'secondary' }}">{{ alert.type or 'Info' }}</span>
+            </td>
+          </tr>
+          {% else %}
+          <tr id="noAlerts">
+            <td colspan="3" class="text-center text-muted py-3">No alerts recorded.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Auto-refresh classroom status every 30 seconds
+  setInterval(function () {
+    fetch("{{ url_for('faculty.monitoring_status') }}")
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data.alert) {
+          var tbody = document.getElementById("alertLogBody");
+          var noAlerts = document.getElementById("noAlerts");
+          if (noAlerts) noAlerts.remove();
+          var row = "<tr><td class=\"text-muted small\">" + data.alert.timestamp + "</td>" +
+                    "<td>" + data.alert.message + "</td>" +
+                    "<td><span class=\"badge bg-warning text-dark\">" + (data.alert.type || "Info") + "</span></td></tr>";
+          tbody.insertAdjacentHTML("afterbegin", row);
+        }
+      })
+      .catch(function () {});
+  }, 30000);
+
+  document.getElementById("clearAlerts").addEventListener("click", function () {
+    var tbody = document.getElementById("alertLogBody");
+    tbody.innerHTML = "<tr id=\"noAlerts\"><td colspan=\"3\" class=\"text-center text-muted py-3\">No alerts recorded.</td></tr>";
+  });
+</script>
+{% endblock %}

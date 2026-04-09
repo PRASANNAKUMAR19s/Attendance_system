@@ -1,0 +1,82 @@
+<!-- Student Navigation Bar Component -->
+<nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #00aa00;">
+  <div class="container-fluid">
+    <a class="navbar-brand d-flex align-items-center gap-2" href="{{ url_for('student_portal.dashboard') }}">
+      <i class="bi bi-mortarboard-fill fs-4"></i>
+      <span class="fw-bold">AI Attendance</span>
+      <span class="badge bg-light text-success ms-1 small">Student</span>
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+            data-bs-target="#navbarStudent" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarStudent">
+      {% if session.get('user_id') %}
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item">
+          <a class="nav-link {% if request.endpoint == 'student_portal.dashboard' %}active{% endif %}"
+             href="{{ url_for('student_portal.dashboard') }}">
+            <i class="bi bi-speedometer2"></i> Dashboard
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if request.endpoint == 'student_portal.attendance' %}active{% endif %}"
+             href="{{ url_for('student_portal.attendance') }}">
+            <i class="bi bi-calendar-check"></i> My Attendance
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if request.endpoint == 'student_portal.profile' %}active{% endif %}"
+             href="{{ url_for('student_portal.profile') }}">
+            <i class="bi bi-person-badge"></i> Profile
+          </a>
+        </li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+            <i class="bi bi-envelope-paper"></i> OD Letters
+          </a>
+          <ul class="dropdown-menu">
+            <li>
+              <a class="dropdown-item {% if request.endpoint == 'student_portal.od_upload' %}active{% endif %}"
+                 href="{{ url_for('student_portal.od_upload') }}">
+                <i class="bi bi-upload me-1"></i> Upload OD Letter
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item {% if request.endpoint == 'student_portal.od_status' %}active{% endif %}"
+                 href="{{ url_for('student_portal.od_status') }}">
+                <i class="bi bi-info-circle me-1"></i> Check OD Status
+              </a>
+            </li>
+          </ul>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if request.endpoint == 'student_portal.download_templates' %}active{% endif %}"
+             href="{{ url_for('student_portal.download_templates') }}">
+            <i class="bi bi-download"></i> Downloads
+          </a>
+        </li>
+      </ul>
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+            <i class="bi bi-person-circle"></i>
+            {{ session.get('full_name') or session.get('username') }}
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><span class="dropdown-item-text text-muted small">
+              Reg No: {{ session.get('username') }}
+            </span></li>
+            <li><hr class="dropdown-divider" /></li>
+            <li>
+              <a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}">
+                <i class="bi bi-box-arrow-right"></i> Logout
+              </a>
+            </li>
+          </ul>
+        </li>
+      </ul>
+      {% endif %}
+    </div>
+  </div>
+</nav>
