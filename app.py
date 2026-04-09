@@ -26,11 +26,11 @@ import logging
 import os
 from datetime import timedelta
 
-from flask import Flask, redirect, url_for
+from flask import Flask, redirect, session, url_for
 
 import config as _config
 from database import init_db
-from routes import admin_bp, auth_bp
+from routes import admin_bp, auth_bp, faculty_bp, student_portal_bp
 
 # ---------------------------------------------------------------------------
 # Logging
@@ -63,10 +63,17 @@ def create_app() -> Flask:
     # ── Register Blueprints ──────────────────────────────────────────────────
     flask_app.register_blueprint(auth_bp)
     flask_app.register_blueprint(admin_bp)
+    flask_app.register_blueprint(faculty_bp)
+    flask_app.register_blueprint(student_portal_bp)
 
     # ── Root redirect ────────────────────────────────────────────────────────
     @flask_app.route("/")
     def index():
+        role = session.get("role", "")
+        if role in ("tutor", "hod"):
+            return redirect(url_for("faculty.dashboard"))
+        if role == "student":
+            return redirect(url_for("student_portal.dashboard"))
         return redirect(url_for("admin.dashboard"))
 
     # ── Security headers ─────────────────────────────────────────────────────
