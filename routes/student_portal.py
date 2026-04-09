@@ -11,6 +11,7 @@ import logging
 from datetime import date, datetime
 from functools import wraps
 
+import config as _config
 from flask import (
     Blueprint,
     flash,
@@ -236,7 +237,6 @@ def attendance_pdf():
     records = _get_attendance_records(reg_no)
     summary = _compute_summary(records)
     generated_at = datetime.now().strftime("%d %B %Y %H:%M")
-    import config as _config
     return render_template(
         "student_attendance_pdf.html",
         user=user,

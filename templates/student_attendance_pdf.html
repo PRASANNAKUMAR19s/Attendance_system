@@ -16,7 +16,7 @@
     .summary-box { flex: 1; border: 1px solid #ddd; border-radius: 4px; padding: 8px; text-align: center; }
     .summary-box .value { font-size: 22px; font-weight: bold; }
     .summary-box .label { font-size: 10px; color: #777; }
-    .pct { color: {% if attendance_pct >= 75 %}#00aa00{% elif attendance_pct >= 60 %}#cc8800{% else %}#cc0000{% endif %}; }
+    .pct { color: {% if attendance_pct is not none and attendance_pct >= 75 %}#00aa00{% elif attendance_pct is not none and attendance_pct >= 60 %}#cc8800{% else %}#cc0000{% endif %}; }
     table { width: 100%; border-collapse: collapse; margin-top: 8px; }
     th { background: #00aa00; color: #fff; padding: 6px 8px; text-align: left; font-size: 11px; }
     td { padding: 5px 8px; border-bottom: 1px solid #eee; font-size: 11px; }
