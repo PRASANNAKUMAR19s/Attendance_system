@@ -1,0 +1,82 @@
+<!-- Faculty Navigation Bar Component -->
+<nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #0066cc;">
+  <div class="container-fluid">
+    <a class="navbar-brand d-flex align-items-center gap-2" href="{{ url_for('faculty.dashboard') }}">
+      <i class="bi bi-person-workspace fs-4"></i>
+      <span class="fw-bold">AI Attendance</span>
+      <span class="badge bg-light text-primary ms-1 small">Faculty</span>
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+            data-bs-target="#navbarFaculty" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarFaculty">
+      {% if session.get('user_id') %}
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item">
+          <a class="nav-link {% if request.endpoint == 'faculty.dashboard' %}active{% endif %}"
+             href="{{ url_for('faculty.dashboard') }}">
+            <i class="bi bi-speedometer2"></i> Dashboard
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if request.endpoint == 'faculty.mark_attendance' %}active{% endif %}"
+             href="{{ url_for('faculty.mark_attendance') }}">
+            <i class="bi bi-check2-square"></i> Mark Attendance
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if request.endpoint == 'faculty.od_letters' %}active{% endif %}"
+             href="{{ url_for('faculty.od_letters') }}">
+            <i class="bi bi-envelope-paper"></i> OD Letters
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if request.endpoint == 'faculty.reports' %}active{% endif %}"
+             href="{{ url_for('faculty.reports') }}">
+            <i class="bi bi-file-earmark-bar-graph"></i> Reports
+          </a>
+        </li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+            <i class="bi bi-grid"></i> More
+          </a>
+          <ul class="dropdown-menu">
+            <li>
+              <a class="dropdown-item {% if request.endpoint == 'faculty.register_student' %}active{% endif %}"
+                 href="{{ url_for('faculty.register_student') }}">
+                <i class="bi bi-person-plus me-1"></i> Register Student
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item {% if request.endpoint == 'faculty.monitoring' %}active{% endif %}"
+                 href="{{ url_for('faculty.monitoring') }}">
+                <i class="bi bi-camera-video me-1"></i> Live Monitoring
+              </a>
+            </li>
+          </ul>
+        </li>
+      </ul>
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+            <i class="bi bi-person-circle"></i>
+            {{ session.get('full_name') or session.get('username') }}
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><span class="dropdown-item-text text-muted small">
+              Role: {{ session.get('role', 'tutor') | capitalize }}
+            </span></li>
+            <li><hr class="dropdown-divider" /></li>
+            <li>
+              <a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}">
+                <i class="bi bi-box-arrow-right"></i> Logout
+              </a>
+            </li>
+          </ul>
+        </li>
+      </ul>
+      {% endif %}
+    </div>
+  </div>
+</nav>

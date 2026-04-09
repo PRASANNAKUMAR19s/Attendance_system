@@ -1,0 +1,93 @@
+{% extends "student_base.html" %}
+{% block title %}Download Templates — Student Portal{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="fw-bold mb-0">
+      <i class="bi bi-download me-2" style="color:#00aa00;"></i>Downloads
+    </h2>
+    <p class="text-muted mb-0">Download templates and reports</p>
+  </div>
+  <a href="{{ url_for('student_portal.dashboard') }}" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left me-1"></i> Back
+  </a>
+</div>
+
+<div class="row g-3">
+  <!-- Attendance PDF -->
+  <div class="col-md-6 col-xl-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body d-flex flex-column">
+        <div class="d-flex align-items-center gap-3 mb-3">
+          <div class="rounded-3 p-3 bg-danger bg-opacity-10">
+            <i class="bi bi-file-earmark-pdf fs-2 text-danger"></i>
+          </div>
+          <div>
+            <h6 class="fw-bold mb-0">Attendance Report</h6>
+            <p class="text-muted small mb-0">Your full attendance as PDF</p>
+          </div>
+        </div>
+        <p class="text-muted small flex-grow-1">
+          Download a printable PDF of your complete attendance record including
+          dates, status, and overall percentage.
+        </p>
+        <a href="{{ url_for('student_portal.attendance_pdf') }}"
+           class="btn btn-outline-danger mt-auto">
+          <i class="bi bi-download me-1"></i> Download PDF
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- OD Letter Template -->
+  <div class="col-md-6 col-xl-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body d-flex flex-column">
+        <div class="d-flex align-items-center gap-3 mb-3">
+          <div class="rounded-3 p-3 bg-primary bg-opacity-10">
+            <i class="bi bi-file-earmark-text fs-2 text-primary"></i>
+          </div>
+          <div>
+            <h6 class="fw-bold mb-0">OD Letter Template</h6>
+            <p class="text-muted small mb-0">Blank OD request form</p>
+          </div>
+        </div>
+        <p class="text-muted small flex-grow-1">
+          Download a blank OD letter template that you can fill in and submit
+          to your tutor for approval.
+        </p>
+        <a href="{{ url_for('student_portal.download_od_template') }}"
+           class="btn btn-outline-primary mt-auto">
+          <i class="bi bi-download me-1"></i> Download Template
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Defaulter Letter Template -->
+  <div class="col-md-6 col-xl-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body d-flex flex-column">
+        <div class="d-flex align-items-center gap-3 mb-3">
+          <div class="rounded-3 p-3 bg-warning bg-opacity-10">
+            <i class="bi bi-exclamation-triangle fs-2 text-warning"></i>
+          </div>
+          <div>
+            <h6 class="fw-bold mb-0">Shortage Condonation</h6>
+            <p class="text-muted small mb-0">Attendance shortage letter</p>
+          </div>
+        </div>
+        <p class="text-muted small flex-grow-1">
+          Template for students with attendance below 75% to apply for
+          condonation with valid reasons.
+        </p>
+        <a href="{{ url_for('student_portal.download_condonation_template') }}"
+           class="btn btn-outline-warning mt-auto">
+          <i class="bi bi-download me-1"></i> Download Template
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
