@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "faculty_base.html" %}
 {% block title %}Faculty Dashboard — AI Attendance System{% endblock %}
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}" />
@@ -15,7 +15,7 @@
       <span class="badge bg-primary">{{ session.get('role', 'tutor') | capitalize }}</span>
     </p>
   </div>
-  <a href="{{ url_for('admin.register_student') }}" class="btn btn-primary">
+  <a href="{{ url_for('faculty.register_student') }}" class="btn btn-primary">
     <i class="bi bi-person-plus me-1"></i> Register Student
   </a>
 </div>
@@ -77,8 +77,20 @@
       </div>
       <div class="card-body">
         <div class="d-flex flex-wrap gap-2">
-          <a href="{{ url_for('admin.register_student') }}" class="btn btn-outline-primary">
+          <a href="{{ url_for('faculty.register_student') }}" class="btn btn-outline-primary">
             <i class="bi bi-person-plus me-1"></i> Register Student
+          </a>
+          <a href="{{ url_for('faculty.mark_attendance') }}" class="btn btn-outline-success">
+            <i class="bi bi-check2-square me-1"></i> Mark Attendance
+          </a>
+          <a href="{{ url_for('faculty.od_letters') }}" class="btn btn-outline-info">
+            <i class="bi bi-envelope-paper me-1"></i> View OD Letters
+          </a>
+          <a href="{{ url_for('faculty.reports') }}" class="btn btn-outline-danger">
+            <i class="bi bi-file-earmark-bar-graph me-1"></i> Download Reports
+          </a>
+          <a href="{{ url_for('faculty.monitoring') }}" class="btn btn-outline-dark">
+            <i class="bi bi-camera-video me-1"></i> Live Monitoring
           </a>
           <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-secondary">
             <i class="bi bi-list-check me-1"></i> Student List
@@ -122,7 +134,7 @@
         <tr>
           <td colspan="6" class="text-center text-muted py-4">
             No students registered yet.
-            <a href="{{ url_for('admin.register_student') }}">Register the first student →</a>
+            <a href="{{ url_for('faculty.register_student') }}">Register the first student →</a>
           </td>
         </tr>
         {% endfor %}

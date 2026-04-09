@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Attendance Report — {{ student_name or reg_no }}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, Helvetica, sans-serif; font-size: 12px; color: #111; }
+    .header { text-align: center; border-bottom: 2px solid #00aa00; padding-bottom: 12px; margin-bottom: 16px; }
+    .header h1 { font-size: 20px; color: #00aa00; margin-bottom: 4px; }
+    .header p { color: #555; font-size: 11px; }
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 24px; margin-bottom: 16px; }
+    .info-item label { font-weight: bold; color: #555; font-size: 11px; }
+    .info-item span { display: block; }
+    .summary { display: flex; gap: 12px; margin-bottom: 16px; }
+    .summary-box { flex: 1; border: 1px solid #ddd; border-radius: 4px; padding: 8px; text-align: center; }
+    .summary-box .value { font-size: 22px; font-weight: bold; }
+    .summary-box .label { font-size: 10px; color: #777; }
+    .pct { color: {% if attendance_pct is not none and attendance_pct >= 75 %}#00aa00{% elif attendance_pct is not none and attendance_pct >= 60 %}#cc8800{% else %}#cc0000{% endif %}; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    th { background: #00aa00; color: #fff; padding: 6px 8px; text-align: left; font-size: 11px; }
+    td { padding: 5px 8px; border-bottom: 1px solid #eee; font-size: 11px; }
+    tr:nth-child(even) td { background: #f9f9f9; }
+    .badge-present { color: #00aa00; font-weight: bold; }
+    .badge-late    { color: #cc8800; font-weight: bold; }
+    .badge-absent  { color: #cc0000; font-weight: bold; }
+    .badge-od      { color: #0066cc; font-weight: bold; }
+    .footer { margin-top: 20px; text-align: center; font-size: 10px; color: #999; border-top: 1px solid #ddd; padding-top: 8px; }
+    @media print { body { font-size: 11px; } }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>AI Attendance System</h1>
+    <p>{{ config_college or 'Paavai Engineering College' }} — {{ config_dept or 'AI &amp; Data Science' }}</p>
+    <p>Generated on: {{ generated_at }}</p>
+  </div>
+
+  <div class="info-grid">
+    <div class="info-item">
+      <label>Register Number</label>
+      <span>{{ reg_no }}</span>
+    </div>
+    <div class="info-item">
+      <label>Student Name</label>
+      <span>{{ student_name or '—' }}</span>
+    </div>
+    <div class="info-item">
+      <label>Department</label>
+      <span>{{ department or '—' }}</span>
+    </div>
+    <div class="info-item">
+      <label>Year</label>
+      <span>{{ year or '—' }}</span>
+    </div>
+  </div>
+
+  <div class="summary">
+    <div class="summary-box">
+      <div class="value pct">{{ attendance_pct or '—' }}%</div>
+      <div class="label">Overall</div>
+    </div>
+    <div class="summary-box">
+      <div class="value" style="color:#555;">{{ total_classes or 0 }}</div>
+      <div class="label">Total</div>
+    </div>
+    <div class="summary-box">
+      <div class="value badge-present">{{ present_count or 0 }}</div>
+      <div class="label">Present</div>
+    </div>
+    <div class="summary-box">
+      <div class="value badge-late">{{ late_count or 0 }}</div>
+      <div class="label">Late</div>
+    </div>
+    <div class="summary-box">
+      <div class="value badge-absent">{{ absent_count or 0 }}</div>
+      <div class="label">Absent</div>
+    </div>
+    <div class="summary-box">
+      <div class="value badge-od">{{ od_count or 0 }}</div>
+      <div class="label">OD</div>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Date</th>
+        <th>Day</th>
+        <th>Status</th>
+        <th>Reason</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for rec in records %}
+      <tr>
+        <td>{{ loop.index }}</td>
+        <td>{{ rec.date }}</td>
+        <td>{{ rec.day or '' }}</td>
+        <td>
+          {% if rec.status == 'Present' %}
+            <span class="badge-present">Present</span>
+          {% elif rec.status == 'Late' %}
+            <span class="badge-late">Late</span>
+          {% elif rec.status == 'Absent' %}
+            <span class="badge-absent">Absent</span>
+          {% elif rec.status == 'OD' %}
+            <span class="badge-od">OD</span>
+          {% else %}
+            {{ rec.status }}
+          {% endif %}
+        </td>
+        <td>{{ rec.reason or '—' }}</td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="5" style="text-align:center;color:#999;padding:12px;">No attendance records found.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="footer">
+    AI Attendance System — {{ config_college or 'Paavai Engineering College' }}
+  </div>
+</body>
+</html>

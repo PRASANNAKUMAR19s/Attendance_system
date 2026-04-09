@@ -1,0 +1,117 @@
+{% extends "student_base.html" %}
+{% block title %}Upload OD Letter — Student Portal{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="fw-bold mb-0">
+      <i class="bi bi-upload me-2" style="color:#00aa00;"></i>Upload OD Letter
+    </h2>
+    <p class="text-muted mb-0">Submit an On-Duty leave request with supporting document</p>
+  </div>
+  <a href="{{ url_for('student_portal.dashboard') }}" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left me-1"></i> Back
+  </a>
+</div>
+
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white py-3 fw-semibold">
+        <i class="bi bi-envelope-paper me-1" style="color:#00aa00;"></i> OD Request Form
+      </div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('student_portal.od_upload') }}"
+              enctype="multipart/form-data" novalidate>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Student Register Number</label>
+            <input type="text" class="form-control" value="{{ reg_no }}" readonly />
+          </div>
+
+          <div class="mb-3">
+            <label for="od_date" class="form-label fw-semibold">
+              OD Date <span class="text-danger">*</span>
+            </label>
+            <input type="date" id="od_date" name="od_date" class="form-control" required />
+            <div class="form-text">Date for which you are requesting On-Duty leave</div>
+          </div>
+
+          <div class="mb-3">
+            <label for="reason" class="form-label fw-semibold">
+              Reason <span class="text-danger">*</span>
+            </label>
+            <textarea id="reason" name="reason" class="form-control" rows="3"
+                      placeholder="Describe the reason for the OD request…" required></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label for="od_file" class="form-label fw-semibold">
+              Supporting Document <span class="text-muted small">(PDF or image)</span>
+            </label>
+            <input type="file" id="od_file" name="od_file" class="form-control"
+                   accept=".pdf,.jpg,.jpeg,.png" />
+            <div class="form-text">Upload the OD letter or proof document (optional but recommended)</div>
+          </div>
+
+          <div class="alert alert-info d-flex align-items-start gap-2 py-2">
+            <i class="bi bi-info-circle-fill mt-1 flex-shrink-0"></i>
+            <div class="small">
+              Your OD request will be reviewed by your faculty tutor. You can check the status
+              on the <a href="{{ url_for('student_portal.od_status') }}">OD Status</a> page.
+            </div>
+          </div>
+
+          <div class="d-flex gap-2 justify-content-end mt-4">
+            <a href="{{ url_for('student_portal.dashboard') }}" class="btn btn-outline-secondary">
+              <i class="bi bi-x me-1"></i> Cancel
+            </a>
+            <button type="submit" class="btn btn-student">
+              <i class="bi bi-send me-1"></i> Submit OD Request
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Previous submissions -->
+    {% if recent_submissions %}
+    <div class="card border-0 shadow-sm mt-3">
+      <div class="card-header bg-white py-3 fw-semibold">
+        <i class="bi bi-clock-history me-1"></i> Recent Submissions
+      </div>
+      <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>OD Date</th>
+              <th>Reason</th>
+              <th>Status</th>
+              <th>Submitted</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for sub in recent_submissions %}
+            <tr>
+              <td>{{ sub.od_date }}</td>
+              <td class="small text-muted">{{ sub.reason | truncate(50) }}</td>
+              <td>
+                {% if sub.status == 'approved' %}
+                  <span class="badge bg-success">Approved</span>
+                {% elif sub.status == 'rejected' %}
+                  <span class="badge bg-danger">Rejected</span>
+                {% else %}
+                  <span class="badge bg-warning text-dark">Pending</span>
+                {% endif %}
+              </td>
+              <td class="small text-muted">{{ sub.submitted_at }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

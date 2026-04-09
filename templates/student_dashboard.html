@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "student_base.html" %}
 {% block title %}Student Dashboard — AI Attendance System{% endblock %}
 
 {% block content %}
@@ -15,12 +15,23 @@
 <!-- Attendance summary cards -->
 <div class="row g-3 mb-4">
   <div class="col-sm-6 col-xl-3">
-    <div class="card border-0 shadow-sm bg-primary text-white h-100">
-      <div class="card-body d-flex align-items-center gap-3">
+    <div class="card border-0 shadow-sm h-100" style="background-color:#00aa00;">
+      <div class="card-body d-flex align-items-center gap-3 text-white">
         <i class="bi bi-bar-chart-fill fs-1 opacity-75"></i>
         <div>
-          <div class="fs-2 fw-bold">—%</div>
+          <div class="fs-2 fw-bold">{{ attendance_pct if attendance_pct is not none else '—' }}%</div>
           <div class="small opacity-75">Attendance %</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="card border-0 shadow-sm bg-primary text-white h-100">
+      <div class="card-body d-flex align-items-center gap-3">
+        <i class="bi bi-calendar3 fs-1 opacity-75"></i>
+        <div>
+          <div class="fs-2 fw-bold">{{ total_classes or 0 }}</div>
+          <div class="small opacity-75">Total Classes</div>
         </div>
       </div>
     </div>
@@ -30,42 +41,31 @@
       <div class="card-body d-flex align-items-center gap-3">
         <i class="bi bi-check2-circle fs-1 opacity-75"></i>
         <div>
-          <div class="fs-2 fw-bold">—</div>
-          <div class="small opacity-75">Days Present</div>
+          <div class="fs-2 fw-bold">{{ present_count or 0 }}</div>
+          <div class="small opacity-75">Present</div>
         </div>
       </div>
     </div>
   </div>
   <div class="col-sm-6 col-xl-3">
-    <div class="card border-0 shadow-sm bg-warning text-dark h-100">
+    <div class="card border-0 shadow-sm bg-danger text-white h-100">
       <div class="card-body d-flex align-items-center gap-3">
         <i class="bi bi-x-circle fs-1 opacity-75"></i>
         <div>
-          <div class="fs-2 fw-bold">—</div>
-          <div class="small opacity-50">Days Absent</div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="col-sm-6 col-xl-3">
-    <div class="card border-0 shadow-sm bg-info text-white h-100">
-      <div class="card-body d-flex align-items-center gap-3">
-        <i class="bi bi-calendar3 fs-1 opacity-75"></i>
-        <div>
-          <div class="fs-2 fw-bold">—</div>
-          <div class="small opacity-75">Total Classes</div>
+          <div class="fs-2 fw-bold">{{ absent_count or 0 }}</div>
+          <div class="small opacity-75">Absent</div>
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Student details -->
+<!-- Quick actions & profile -->
 <div class="row g-3">
-  <div class="col-md-6">
+  <div class="col-md-5">
     <div class="card border-0 shadow-sm h-100">
       <div class="card-header bg-white py-3 fw-semibold">
-        <i class="bi bi-person-badge me-1"></i> My Profile
+        <i class="bi bi-person-badge me-1 text-success"></i> My Profile
       </div>
       <div class="card-body">
         <dl class="row mb-0">
@@ -73,25 +73,52 @@
           <dd class="col-sm-8"><code>{{ reg_no }}</code></dd>
           <dt class="col-sm-4 text-muted">Name</dt>
           <dd class="col-sm-8">{{ user.full_name or '—' }}</dd>
-          <dt class="col-sm-4 text-muted">Role</dt>
-          <dd class="col-sm-8">
-            <span class="badge bg-success">Student</span>
-          </dd>
+          <dt class="col-sm-4 text-muted">Late</dt>
+          <dd class="col-sm-8"><span class="badge bg-warning text-dark">{{ late_count or 0 }}</span></dd>
+          <dt class="col-sm-4 text-muted">OD</dt>
+          <dd class="col-sm-8"><span class="badge bg-info">{{ od_count or 0 }}</span></dd>
         </dl>
       </div>
     </div>
   </div>
 
-  <div class="col-md-6">
+  <div class="col-md-7">
     <div class="card border-0 shadow-sm h-100">
       <div class="card-header bg-white py-3 fw-semibold">
         <i class="bi bi-lightning-fill text-warning me-1"></i> Quick Actions
       </div>
       <div class="card-body">
-        <div class="d-grid gap-2">
-          <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger">
-            <i class="bi bi-box-arrow-right me-1"></i> Logout
-          </a>
+        <div class="row g-2">
+          <div class="col-6">
+            <a href="{{ url_for('student_portal.attendance') }}" class="btn btn-outline-success w-100">
+              <i class="bi bi-calendar-check me-1"></i> View Attendance
+            </a>
+          </div>
+          <div class="col-6">
+            <a href="{{ url_for('student_portal.attendance_pdf') }}" class="btn btn-outline-danger w-100">
+              <i class="bi bi-file-earmark-pdf me-1"></i> Download PDF
+            </a>
+          </div>
+          <div class="col-6">
+            <a href="{{ url_for('student_portal.od_upload') }}" class="btn btn-outline-primary w-100">
+              <i class="bi bi-upload me-1"></i> Upload OD
+            </a>
+          </div>
+          <div class="col-6">
+            <a href="{{ url_for('student_portal.od_status') }}" class="btn btn-outline-info w-100">
+              <i class="bi bi-info-circle me-1"></i> OD Status
+            </a>
+          </div>
+          <div class="col-6">
+            <a href="{{ url_for('student_portal.download_templates') }}" class="btn btn-outline-secondary w-100">
+              <i class="bi bi-download me-1"></i> Downloads
+            </a>
+          </div>
+          <div class="col-6">
+            <a href="{{ url_for('student_portal.profile') }}" class="btn btn-outline-dark w-100">
+              <i class="bi bi-person-badge me-1"></i> Profile
+            </a>
+          </div>
         </div>
       </div>
     </div>

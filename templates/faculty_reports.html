@@ -1,0 +1,148 @@
+{% extends "faculty_base.html" %}
+{% block title %}Reports — Faculty Portal{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="fw-bold mb-0">
+      <i class="bi bi-file-earmark-bar-graph me-2 text-faculty"></i>Attendance Reports
+    </h2>
+    <p class="text-muted mb-0">Download attendance reports in PDF or Excel format</p>
+  </div>
+  <a href="{{ url_for('faculty.dashboard') }}" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
+  </a>
+</div>
+
+<!-- Report generation form -->
+<div class="row g-3 mb-4">
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-white py-3 fw-semibold">
+        <i class="bi bi-sliders me-1 text-faculty"></i> Generate Report
+      </div>
+      <div class="card-body">
+        <form method="GET" action="{{ url_for('faculty.reports') }}">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Report Type</label>
+            <select name="report_type" class="form-select">
+              <option value="daily" {% if report_type == 'daily' %}selected{% endif %}>Daily Report</option>
+              <option value="weekly" {% if report_type == 'weekly' %}selected{% endif %}>Weekly Report</option>
+              <option value="monthly" {% if report_type == 'monthly' %}selected{% endif %}>Monthly Report</option>
+              <option value="custom" {% if report_type == 'custom' %}selected{% endif %}>Custom Range</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">From Date</label>
+            <input type="date" name="from_date" class="form-control"
+                   value="{{ from_date or '' }}" />
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">To Date</label>
+            <input type="date" name="to_date" class="form-control"
+                   value="{{ to_date or '' }}" />
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Student (optional)</label>
+            <select name="reg_no" class="form-select">
+              <option value="">— All Students —</option>
+              {% for s in students %}
+              <option value="{{ s.reg_no }}" {% if selected_reg == s.reg_no %}selected{% endif %}>
+                {{ s.reg_no }} — {{ s.name }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          <button type="submit" class="btn btn-faculty w-100">
+            <i class="bi bi-eye me-1"></i> Preview Report
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-white py-3 fw-semibold">
+        <i class="bi bi-download me-1 text-faculty"></i> Download Options
+      </div>
+      <div class="card-body d-flex flex-column gap-3">
+        <a href="{{ url_for('faculty.reports', format='pdf', from_date=from_date or '', to_date=to_date or '', reg_no=selected_reg or '') }}"
+           class="btn btn-outline-danger d-flex align-items-center gap-2">
+          <i class="bi bi-file-earmark-pdf fs-4"></i>
+          <div class="text-start">
+            <div class="fw-semibold">Download PDF</div>
+            <div class="small text-muted">Printable attendance report</div>
+          </div>
+        </a>
+        <a href="{{ url_for('faculty.reports', format='excel', from_date=from_date or '', to_date=to_date or '', reg_no=selected_reg or '') }}"
+           class="btn btn-outline-success d-flex align-items-center gap-2">
+          <i class="bi bi-file-earmark-excel fs-4"></i>
+          <div class="text-start">
+            <div class="fw-semibold">Download Excel</div>
+            <div class="small text-muted">Spreadsheet with full data</div>
+          </div>
+        </a>
+        <a href="{{ url_for('faculty.reports', format='csv', from_date=from_date or '', to_date=to_date or '', reg_no=selected_reg or '') }}"
+           class="btn btn-outline-secondary d-flex align-items-center gap-2">
+          <i class="bi bi-file-earmark-text fs-4"></i>
+          <div class="text-start">
+            <div class="fw-semibold">Download CSV</div>
+            <div class="small text-muted">Raw data for analysis</div>
+          </div>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Report Preview Table -->
+{% if report_rows %}
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+    <span class="fw-semibold">
+      <i class="bi bi-table me-1"></i> Report Preview
+    </span>
+    <span class="text-muted small">{{ report_rows | length }} record(s)</span>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>#</th>
+          <th>Date</th>
+          <th>Reg. No.</th>
+          <th>Name</th>
+          <th>Status</th>
+          <th>Reason</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in report_rows %}
+        <tr>
+          <td class="text-muted small">{{ loop.index }}</td>
+          <td>{{ row.date or '—' }}</td>
+          <td><code class="text-primary">{{ row.reg_no }}</code></td>
+          <td>{{ row.name or '—' }}</td>
+          <td>
+            {% if row.status == 'Present' %}
+              <span class="badge bg-success">Present</span>
+            {% elif row.status == 'Late' %}
+              <span class="badge bg-warning text-dark">Late</span>
+            {% elif row.status == 'Absent' %}
+              <span class="badge bg-danger">Absent</span>
+            {% elif row.status == 'OD' %}
+              <span class="badge bg-info">OD</span>
+            {% else %}
+              <span class="badge bg-secondary">{{ row.status }}</span>
+            {% endif %}
+          </td>
+          <td class="text-muted small">{{ row.reason or '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
