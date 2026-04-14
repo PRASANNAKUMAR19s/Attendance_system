@@ -1,0 +1,536 @@
+{% extends "faculty_base.html" %}
+
+{% block title %}Face Recognition - Attendance System{% endblock %}
+
+{% block extra_css %}
+<style>
+    #videoCanvas {
+        display: none;
+    }
+    #cameraFeed {
+        width: 100%;
+        max-width: 800px;
+        border-radius: 8px;
+        border: 3px solid #0d6efd;
+        background: #000;
+    }
+    #processedCanvas {
+        width: 100%;
+        max-width: 800px;
+        border-radius: 8px;
+        border: 3px solid #198754;
+        background: #000;
+    }
+    .face-card {
+        border-left: 4px solid;
+        transition: all 0.3s ease;
+    }
+    .face-card.present { border-color: #198754; }
+    .face-card.late { border-color: #ffc107; }
+    .face-card.unknown { border-color: #dc3545; }
+    .face-card.marked { background-color: #d1e7dd; }
+    .stats-card {
+        border-radius: 12px;
+        transition: transform 0.2s;
+    }
+    .stats-card:hover {
+        transform: translateY(-3px);
+    }
+    .period-active {
+        background: linear-gradient(135deg, #0d6efd 0%, #0dcaf0 100%);
+        color: white;
+    }
+    .period-inactive {
+        background: #6c757d;
+        color: white;
+    }
+    #alertLog {
+        max-height: 200px;
+        overflow-y: auto;
+    }
+    .alert-item {
+        animation: slideIn 0.3s ease;
+    }
+    @keyframes slideIn {
+        from { opacity: 0; transform: translateX(-20px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h1 class="h2">
+                <i class="bi bi-camera-video-fill me-2"></i>Face Recognition Attendance
+            </h1>
+            <p class="text-muted">Real-time automated attendance marking</p>
+        </div>
+        <div class="col-md-6 text-end">
+            <span id="currentTime" class="badge bg-dark fs-6 px-3 py-2"></span>
+        </div>
+    </div>
+
+    {% if not is_ready %}
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        <h4 class="alert-heading"><i class="bi bi-exclamation-triangle"></i> Setup Required</h4>
+        <p>Face recognition is not ready. Please ensure:</p>
+        <ul>
+            <li>Dataset is collected (run 1_dataset_collector.py)</li>
+            <li>Model is trained (run 2_train_model.py)</li>
+            <li>Students are registered in the system</li>
+        </ul>
+        <hr>
+        <p class="mb-0"><strong>Students loaded:</strong> {{ students_count }}</p>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endif %}
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card stats-card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-people"></i> Total Students</h5>
+                    <h2 id="totalStudents">{{ students_count }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stats-card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-check-circle"></i> Present</h5>
+                    <h2 id="presentCount">0</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stats-card bg-warning text-dark">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-clock"></i> Late</h5>
+                    <h2 id="lateCount">0</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stats-card bg-danger text-white">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-x-circle"></i> Absent</h5>
+                    <h2 id="absentCount">0</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Period Status -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-clock-history"></i> Class Schedule - Today</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for period_name, start, late, end in periods %}
+                        <div class="col-md-3 mb-2">
+                            <div id="period-{{ loop.index }}" class="period-inactive p-2 rounded text-center">
+                                <strong>{{ period_name }}</strong><br>
+                                <small>{{ start }} - {{ end }}</small><br>
+                                <span class="badge bg-secondary">Inactive</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Camera & Detected Faces -->
+    <div class="row">
+        <!-- Live Camera Feed -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-webcam"></i> Live Camera Feed</h5>
+                    <div>
+                        <select id="cameraSelect" class="form-select form-select-sm d-inline-block w-auto me-2">
+                            <option value="0">Camera 0</option>
+                        </select>
+                        <button id="toggleCamera" class="btn btn-sm btn-success">
+                            <i class="bi bi-play"></i> Start
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body text-center">
+                    <div class="position-relative">
+                        <video id="cameraFeed" autoplay muted playsinline style="display:none;"></video>
+                        <canvas id="videoCanvas"></canvas>
+                        <canvas id="processedCanvas"></canvas>
+                        <img id="streamImage" src="" style="display:none; width:100%; border-radius:8px;" />
+                        <div id="cameraPlaceholder" class="p-5 bg-light rounded">
+                            <i class="bi bi-camera-video-off" style="font-size: 4rem;"></i>
+                            <p class="mt-3 text-muted">Click "Start" to begin face recognition</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detected Faces & Activity Log -->
+        <div class="col-lg-4">
+            <!-- Current Detection -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-person-check"></i> Detected Students</h5>
+                </div>
+                <div class="card-body" id="detectedFaces">
+                    <p class="text-muted text-center">No faces detected yet</p>
+                </div>
+            </div>
+
+            <!-- Activity Log -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-activity"></i> Activity Log</h5>
+                    <button id="clearLog" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-trash"></i> Clear
+                    </button>
+                </div>
+                <div class="card-body" id="alertLog">
+                    <div class="alert-item alert alert-info mb-2">
+                        <small><i class="bi bi-info-circle"></i> System ready. Click Start to begin.</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Auto Attendance Controls -->
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-robot"></i> Auto Attendance - Period Management</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Select Period:</label>
+                            <select id="selectedPeriod" class="form-select">
+                                {% for period_name, start, late, end in periods %}
+                                <option value="{{ period_name }}">{{ period_name }} ({{ start }} - {{ end }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label fw-semibold">Actions:</label>
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-success" onclick="startPeriod()">
+                                    <i class="bi bi-play-circle"></i> Start Period
+                                </button>
+                                <button type="button" class="btn btn-danger" onclick="endPeriod()">
+                                    <i class="bi bi-stop-circle"></i> End Period (Mark Absent)
+                                </button>
+                                <a href="{{ url_for('faculty.mark_attendance') }}" class="btn btn-outline-primary">
+                                    <i class="bi bi-pencil-square"></i> Manual Marking
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <h6><i class="bi bi-people"></i> Attendance Status</h6>
+                            <div class="table-responsive" style="max-height: 300px;">
+                                <table class="table table-sm table-hover">
+                                    <thead class="table-light sticky-top">
+                                        <tr>
+                                            <th>Reg. No</th>
+                                            <th>Name</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="attendanceTable">
+                                        <tr><td colspan="3" class="text-center text-muted">Select a period and click "Start Period"</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const CAMERA_URL = "{{ url_for('faculty.face_recognition_stream') }}";
+const STATS_URL = "{{ url_for('faculty.face_recognition_stats') }}";
+const STATUS_URL = "{{ url_for('faculty.face_recognition_status') }}";
+const PROCESS_URL = "{{ url_for('faculty.face_recognition_process') }}";
+const START_PERIOD_URL = "{{ url_for('faculty.start_attendance_period') }}";
+const END_PERIOD_URL = "{{ url_for('faculty.end_attendance_period') }}";
+const PERIODS = {{ periods|tojson }};
+
+let isStreaming = false;
+let streamInterval = null;
+let statsInterval = null;
+let currentPeriod = null;
+let periodStarted = false;
+
+function startPeriod() {
+    const period = document.getElementById('selectedPeriod').value;
+    
+    fetch(START_PERIOD_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ period: period })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            periodStarted = true;
+            updateAttendanceTable(data.students);
+            addLogEntry(`Started Period: ${period} - Total: ${data.total_students}`, 'info');
+            addLogEntry(`Students marked: ${data.marked_count} | Pending: ${data.total_students - data.marked_count}`, 'info');
+        } else {
+            addLogEntry('Failed to start period: ' + data.error, 'danger');
+        }
+    })
+    .catch(err => addLogEntry('Error starting period', 'danger'));
+}
+
+function endPeriod() {
+    const period = document.getElementById('selectedPeriod').value;
+    
+    if (!confirm('This will mark all unmarked students as ABSENT. Students detected earlier but not now will be flagged for early leave. Continue?')) {
+        return;
+    }
+    
+    fetch(END_PERIOD_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ period: period })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            periodStarted = false;
+            addLogEntry(`Ended Period: ${period}`, 'success');
+            addLogEntry(`Present: ${data.present} | Absent: ${data.absent}`, 'success');
+            
+            if (data.early_leaves_detected > 0) {
+                addLogEntry(`⚠️ EARLY LEAVE DETECTED: ${data.early_leaves_detected} students`, 'danger');
+                addLogEntry(`📧 Notifications sent to Tutor & HOD`, 'warning');
+                
+                // Show early leave details
+                data.early_leave_students.forEach(student => {
+                    addLogEntry(`   - ${student.name} (${student.reg_no})`, 'danger');
+                });
+            } else {
+                addLogEntry(`No early leaves detected`, 'info');
+            }
+            
+            updateStats();
+        }
+    })
+    .catch(err => addLogEntry('Error ending period', 'danger'));
+}
+
+function updateAttendanceTable(students) {
+    const tbody = document.getElementById('attendanceTable');
+    if (!students || students.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted">No students</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = students.map(s => {
+        let statusBadge, statusClass;
+        if (s.is_marked) {
+            statusBadge = s.status === 'ABSENT' ? '<span class="badge bg-danger">Absent</span>' : 
+                         '<span class="badge bg-success">Present</span>';
+            statusClass = s.status === 'ABSENT' ? 'table-danger' : 'table-success';
+        } else {
+            statusBadge = '<span class="badge bg-warning text-dark">Pending</span>';
+            statusClass = 'table-warning';
+        }
+        return `<tr class="${statusClass}">
+            <td><code>${s.reg_no}</code></td>
+            <td>${s.name}</td>
+            <td>${statusBadge}</td>
+        </tr>`;
+    }).join('');
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    updateTime();
+    setInterval(updateTime, 1000);
+    checkServiceStatus();
+    setInterval(checkServiceStatus, 5000);
+    
+    document.getElementById('toggleCamera').addEventListener('click', toggleCamera);
+    document.getElementById('clearLog').addEventListener('click', clearLog);
+});
+
+function updateTime() {
+    const now = new Date();
+    document.getElementById('currentTime').textContent = now.toLocaleString();
+}
+
+function checkServiceStatus() {
+    fetch(STATUS_URL)
+        .then(r => r.json())
+        .then(data => {
+            if (data.ready) {
+                document.getElementById('totalStudents').textContent = data.students_loaded;
+            }
+            updatePeriodDisplay(data.period);
+        })
+        .catch(err => console.error('Status check failed:', err));
+}
+
+function updatePeriodDisplay(period) {
+    if (!period) {
+        PERIODS.forEach((p, i) => {
+            const el = document.getElementById(`period-${i+1}`);
+            if (el) {
+                el.className = 'period-inactive p-2 rounded text-center';
+                el.querySelector('.badge').className = 'badge bg-secondary';
+                el.querySelector('.badge').textContent = 'Inactive';
+            }
+        });
+        return;
+    }
+    
+    PERIODS.forEach((p, i) => {
+        const el = document.getElementById(`period-${i+1}`);
+        if (el && p[0] === period.name) {
+            el.className = 'period-active p-2 rounded text-center';
+            el.querySelector('.badge').className = `badge bg-${period.status === 'ON_TIME' ? 'success' : 'warning'}`;
+            el.querySelector('.badge').textContent = period.status;
+        } else if (el) {
+            el.className = 'period-inactive p-2 rounded text-center';
+            el.querySelector('.badge').className = 'badge bg-secondary';
+            el.querySelector('.badge').textContent = 'Completed';
+        }
+    });
+    currentPeriod = period;
+}
+
+function toggleCamera() {
+    const btn = document.getElementById('toggleCamera');
+    if (isStreaming) {
+        stopCamera();
+        btn.innerHTML = '<i class="bi bi-play"></i> Start';
+        btn.className = 'btn btn-sm btn-success';
+    } else {
+        startCamera();
+        btn.innerHTML = '<i class="bi bi-stop"></i> Stop';
+        btn.className = 'btn btn-sm btn-danger';
+    }
+}
+
+function startCamera() {
+    document.getElementById('cameraPlaceholder').style.display = 'none';
+    document.getElementById('streamImage').style.display = 'block';
+    document.getElementById('processedCanvas').style.display = 'block';
+    
+    isStreaming = true;
+    streamImage.src = CAMERA_URL + '?t=' + new Date().getTime();
+    
+    // Poll stats every 3 seconds
+    statsInterval = setInterval(updateStats, 3000);
+    
+    addLogEntry('Camera started', 'info');
+}
+
+function stopCamera() {
+    isStreaming = false;
+    if (streamInterval) clearInterval(streamInterval);
+    if (statsInterval) clearInterval(statsInterval);
+    
+    document.getElementById('streamImage').src = '';
+    document.getElementById('streamImage').style.display = 'none';
+    document.getElementById('cameraPlaceholder').style.display = 'block';
+    
+    addLogEntry('Camera stopped', 'warning');
+}
+
+function updateStats() {
+    fetch(STATS_URL)
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('presentCount').textContent = data.stats.present;
+                document.getElementById('lateCount').textContent = data.stats.late;
+                document.getElementById('absentCount').textContent = data.stats.absent;
+                document.getElementById('totalStudents').textContent = data.stats.total;
+            }
+        })
+        .catch(err => console.error('Stats update failed:', err));
+}
+
+function addLogEntry(message, type = 'info') {
+    const log = document.getElementById('alertLog');
+    const colors = {
+        'success': 'alert-success',
+        'warning': 'alert-warning',
+        'danger': 'alert-danger',
+        'info': 'alert-info'
+    };
+    
+    const entry = document.createElement('div');
+    entry.className = `alert-item alert ${colors[type]} mb-2`;
+    entry.innerHTML = `<small><i class="bi bi-clock"></i> ${new Date().toLocaleTimeString()} - ${message}</small>`;
+    
+    log.insertBefore(entry, log.firstChild);
+    
+    // Keep only last 20 entries
+    while (log.children.length > 20) {
+        log.removeChild(log.lastChild);
+    }
+}
+
+function clearLog() {
+    const log = document.getElementById('alertLog');
+    log.innerHTML = '<div class="alert-item alert alert-info mb-2"><small><i class="bi bi-info-circle"></i> Log cleared</small></div>';
+}
+
+function updateDetectedFaces(faces) {
+    const container = document.getElementById('detectedFaces');
+    
+    if (!faces || faces.length === 0) {
+        container.innerHTML = '<p class="text-muted text-center">No faces detected</p>';
+        return;
+    }
+    
+    container.innerHTML = faces.map(face => {
+        const statusClass = face.status === 'ALREADY MARKED' ? 'warning' : 
+                           face.status === 'ON_TIME' ? 'present' : 
+                           face.name === 'Unknown' ? 'unknown' : 'late';
+        const statusBadge = face.status === 'ALREADY MARKED' ? 'bg-secondary' :
+                            face.status === 'ON_TIME' ? 'bg-success' :
+                            face.status === 'LATE' ? 'bg-warning text-dark' : 'bg-danger';
+        
+        return `
+            <div class="face-card ${statusClass} ${face.marked ? 'marked' : ''} p-2 mb-2 rounded bg-light">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>${face.name}</strong><br>
+                        <small class="text-muted">${face.reg_no}</small>
+                    </div>
+                    <span class="badge ${statusBadge}">${face.status}</span>
+                </div>
+                <small class="text-muted">Confidence: ${Math.round(face.confidence)}%</small>
+            </div>
+        `;
+    }).join('');
+}
+</script>
+{% endblock %}

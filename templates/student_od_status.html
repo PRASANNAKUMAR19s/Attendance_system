@@ -1,17 +1,17 @@
 {% extends "student_base.html" %}
-{% block title %}OD Status — Student Portal{% endblock %}
+{% block title %}My OD Letters — Student Portal{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
   <div>
     <h2 class="fw-bold mb-0">
-      <i class="bi bi-info-circle me-2" style="color:#00aa00;"></i>OD Letter Status
+      <i class="bi bi-folder-check me-2" style="color:#00aa00;"></i>My OD Letters
     </h2>
-    <p class="text-muted mb-0">Track your On-Duty leave requests</p>
+    <p class="text-muted mb-0">All uploaded signed OD letters</p>
   </div>
   <div class="d-flex gap-2">
     <a href="{{ url_for('student_portal.od_upload') }}" class="btn btn-success btn-sm">
-      <i class="bi bi-plus me-1"></i> New Request
+      <i class="bi bi-plus me-1"></i> Upload New
     </a>
     <a href="{{ url_for('student_portal.dashboard') }}" class="btn btn-outline-secondary btn-sm">
       <i class="bi bi-arrow-left me-1"></i> Back
@@ -19,90 +19,51 @@
   </div>
 </div>
 
-<!-- Status summary -->
-<div class="row g-3 mb-4">
-  <div class="col-4">
-    <div class="card border-0 shadow-sm text-center h-100">
-      <div class="card-body py-3">
-        <div class="fs-3 fw-bold text-warning">{{ pending_count or 0 }}</div>
-        <div class="small text-muted">Pending</div>
-      </div>
-    </div>
-  </div>
-  <div class="col-4">
-    <div class="card border-0 shadow-sm text-center h-100">
-      <div class="card-body py-3">
-        <div class="fs-3 fw-bold text-success">{{ approved_count or 0 }}</div>
-        <div class="small text-muted">Approved</div>
-      </div>
-    </div>
-  </div>
-  <div class="col-4">
-    <div class="card border-0 shadow-sm text-center h-100">
-      <div class="card-body py-3">
-        <div class="fs-3 fw-bold text-danger">{{ rejected_count or 0 }}</div>
-        <div class="small text-muted">Rejected</div>
-      </div>
-    </div>
+<div class="alert alert-info d-flex align-items-center gap-2 mb-4">
+  <i class="bi bi-info-circle-fill flex-shrink-0"></i>
+  <div class="small">
+    Your OD letters are automatically marked as valid once uploaded (with Tutor & HOD signatures).
   </div>
 </div>
 
-<!-- OD letters table -->
-<div class="card border-0 shadow-sm">
-  <div class="card-header bg-white py-3 fw-semibold">
-    <i class="bi bi-envelope-paper me-1"></i> All OD Requests
+<!-- OD Letters -->
+{% if od_letters %}
+<div class="row g-3">
+  {% for letter in od_letters %}
+  <div class="col-md-6 col-lg-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <div>
+            <h5 class="mb-0">{{ letter.date }}</h5>
+            <small class="text-muted">{{ letter.reason or 'On Duty' }}</small>
+          </div>
+          <span class="badge bg-success">
+            <i class="bi bi-check-circle me-1"></i> Valid
+          </span>
+        </div>
+        <hr class="my-2">
+        <div class="d-flex gap-2">
+          <a href="{{ url_for('static', filename='od_uploads/' + letter.file) }}" 
+             class="btn btn-sm btn-outline-primary flex-grow-1" target="_blank">
+            <i class="bi bi-eye me-1"></i> View Letter
+          </a>
+        </div>
+      </div>
+    </div>
   </div>
-  <div class="table-responsive">
-    <table class="table table-hover align-middle mb-0">
-      <thead class="table-light">
-        <tr>
-          <th>#</th>
-          <th>OD Date</th>
-          <th>Reason</th>
-          <th>Document</th>
-          <th>Submitted</th>
-          <th>Status</th>
-          <th>Reviewed By</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for letter in od_letters %}
-        <tr>
-          <td class="text-muted small">{{ loop.index }}</td>
-          <td>{{ letter.od_date or '—' }}</td>
-          <td class="small text-muted" style="max-width:200px;">{{ letter.reason or '—' }}</td>
-          <td>
-            {% if letter.file_path %}
-            <a href="{{ letter.file_path }}" class="btn btn-sm btn-outline-secondary" target="_blank">
-              <i class="bi bi-file-earmark"></i> View
-            </a>
-            {% else %}
-            <span class="text-muted small">No file</span>
-            {% endif %}
-          </td>
-          <td class="text-muted small">{{ letter.submitted_at or '—' }}</td>
-          <td>
-            {% if letter.status == 'approved' %}
-              <span class="badge bg-success"><i class="bi bi-check2 me-1"></i>Approved</span>
-            {% elif letter.status == 'rejected' %}
-              <span class="badge bg-danger"><i class="bi bi-x me-1"></i>Rejected</span>
-            {% else %}
-              <span class="badge bg-warning text-dark"><i class="bi bi-clock me-1"></i>Pending</span>
-            {% endif %}
-          </td>
-          <td class="text-muted small">{{ letter.reviewed_by or '—' }}</td>
-        </tr>
-        {% else %}
-        <tr>
-          <td colspan="7" class="text-center text-muted py-4">
-            <i class="bi bi-inbox fs-2 d-block mb-2"></i>
-            No OD requests submitted yet.
-            <a href="{{ url_for('student_portal.od_upload') }}">Submit your first request →</a>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card border-0 shadow-sm">
+  <div class="card-body text-center py-5">
+    <i class="bi bi-folder2-open text-muted" style="font-size: 4rem;"></i>
+    <h5 class="mt-3 text-muted">No OD Letters Uploaded</h5>
+    <p class="text-muted">Upload your signed OD letter to get On Duty attendance marked.</p>
+    <a href="{{ url_for('student_portal.od_upload') }}" class="btn btn-success mt-2">
+      <i class="bi bi-upload me-1"></i> Upload OD Letter
+    </a>
   </div>
 </div>
+{% endif %}
 {% endblock %}

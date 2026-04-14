@@ -58,12 +58,11 @@ def get_current_user() -> User | None:
 
 def _default_dashboard_url(role: str) -> str:
     """Return the default post-login URL based on the user's role."""
-    if role in ("tutor", "hod"):
-        return url_for("faculty.dashboard")
+    if role in ("tutor", "hod", "admin"):
+        return url_for("faculty.dashboard")  # ✅ Go to Faculty
     if role == "student":
-        return url_for("student_portal.dashboard")
-    # 'admin' and any other role → admin dashboard
-    return url_for("admin.dashboard")
+        return url_for("student_portal.dashboard")  # ✅ Go to Student
+    return url_for("faculty.dashboard")
 
 
 @auth_bp.route("/login", methods=["GET", "POST"])

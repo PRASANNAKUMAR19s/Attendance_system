@@ -33,16 +33,15 @@ from functools import wraps
 from typing import Any, Dict, List, Tuple
 
 import bcrypt
-from flask import Flask, jsonify, request
+from flask import Blueprint, jsonify, request
 from flask_jwt_extended import (
-    JWTManager,
     create_access_token,
     get_jwt_identity,
     jwt_required,
 )
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
 from flask_restx import Api, Namespace, Resource, fields
+
+from extensions import limiter
 
 from config import (
     ATTENDANCE_DIR,
@@ -68,35 +67,8 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Flask app setup
 # ---------------------------------------------------------------------------
-app = Flask(__name__)
-app.config["SECRET_KEY"] = SECRET_KEY
-app.config["JWT_SECRET_KEY"] = JWT_SECRET_KEY
-app.config["JWT_ACCESS_TOKEN_EXPIRES"] = False   # tokens expire never in dev;
-                                                  # set a timedelta in production
+api_bp = Blueprint("api_bp", __name__)
 
-jwt = JWTManager(app)
-
-# ---------------------------------------------------------------------------
-# Rate limiting
-# ---------------------------------------------------------------------------
-limiter = Limiter(
-    key_func=get_remote_address,
-    app=app,
-    default_limits=["200 per minute", "1000 per hour"],
-    storage_uri="memory://",
-)
-
-# ---------------------------------------------------------------------------
-# Security headers middleware
-# ---------------------------------------------------------------------------
-@app.after_request
-def set_security_headers(response):
-    response.headers["X-Content-Type-Options"] = "nosniff"
-    response.headers["X-Frame-Options"] = "DENY"
-    response.headers["X-XSS-Protection"] = "1; mode=block"
-    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-    response.headers["Cache-Control"] = "no-store"
-    return response
 
 
 # ---------------------------------------------------------------------------
@@ -117,7 +89,7 @@ authorizations = {
 }
 
 api = Api(
-    app,
+    api_bp,
     version="1.0",
     title="Attendance System API",
     description=(
@@ -125,8 +97,7 @@ api = Api(
         "Supports JWT authentication, student CRUD, attendance tracking, "
         "analytics and reporting."
     ),
-    doc="/api/docs",
-    prefix="/api",
+    doc="/docs",
     authorizations=authorizations,
     security="BearerAuth",
 )
@@ -658,22 +629,19 @@ class StudentSearch(Resource):
 # ---------------------------------------------------------------------------
 # Error handlers
 # ---------------------------------------------------------------------------
-@app.errorhandler(404)
+@api_bp.app_errorhandler(404)
 def not_found(e):
     return jsonify({"success": False, "error": "Endpoint not found"}), 404
 
-
-@app.errorhandler(405)
+@api_bp.app_errorhandler(405)
 def method_not_allowed(e):
     return jsonify({"success": False, "error": "Method not allowed"}), 405
 
-
-@app.errorhandler(429)
+@api_bp.app_errorhandler(429)
 def ratelimit_handler(e):
     return jsonify({"success": False, "error": "Rate limit exceeded", "retry_after": str(e.description)}), 429
 
-
-@app.errorhandler(500)
+@api_bp.app_errorhandler(500)
 def internal_error(e):
     logger.error("Internal error: %s", e)
     return jsonify({"success": False, "error": "Internal server error"}), 500
@@ -682,8 +650,4 @@ def internal_error(e):
 # ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
-if __name__ == "__main__":
-    port = int(os.environ.get("API_PORT", 5001))
-    debug = os.environ.get("FLASK_DEBUG", "false").lower() == "true"
-    logger.info("Starting Attendance API on port %d (debug=%s)", port, debug)
-    app.run(host="0.0.0.0", port=port, debug=debug)
+# Entry point moved to app.py

@@ -22,7 +22,6 @@
     td { padding: 5px 8px; border-bottom: 1px solid #eee; font-size: 11px; }
     tr:nth-child(even) td { background: #f9f9f9; }
     .badge-present { color: #00aa00; font-weight: bold; }
-    .badge-late    { color: #cc8800; font-weight: bold; }
     .badge-absent  { color: #cc0000; font-weight: bold; }
     .badge-od      { color: #0066cc; font-weight: bold; }
     .footer { margin-top: 20px; text-align: center; font-size: 10px; color: #999; border-top: 1px solid #ddd; padding-top: 8px; }
@@ -69,16 +68,12 @@
       <div class="label">Present</div>
     </div>
     <div class="summary-box">
-      <div class="value badge-late">{{ late_count or 0 }}</div>
-      <div class="label">Late</div>
-    </div>
-    <div class="summary-box">
       <div class="value badge-absent">{{ absent_count or 0 }}</div>
       <div class="label">Absent</div>
     </div>
     <div class="summary-box">
       <div class="value badge-od">{{ od_count or 0 }}</div>
-      <div class="label">OD</div>
+      <div class="label">On Duty</div>
     </div>
   </div>
 
@@ -99,14 +94,12 @@
         <td>{{ rec.date }}</td>
         <td>{{ rec.day or '' }}</td>
         <td>
-          {% if rec.status == 'Present' %}
+          {% if rec.status|upper in ['PRESENT', 'LATE', 'ON_TIME'] %}
             <span class="badge-present">Present</span>
-          {% elif rec.status == 'Late' %}
-            <span class="badge-late">Late</span>
           {% elif rec.status == 'Absent' %}
             <span class="badge-absent">Absent</span>
           {% elif rec.status == 'OD' %}
-            <span class="badge-od">OD</span>
+            <span class="badge-od">On Duty</span>
           {% else %}
             {{ rec.status }}
           {% endif %}

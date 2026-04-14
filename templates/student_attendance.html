@@ -45,14 +45,7 @@
       </div>
     </div>
   </div>
-  <div class="col-6 col-xl-2">
-    <div class="card border-0 shadow-sm text-center h-100">
-      <div class="card-body py-3">
-        <div class="fs-3 fw-bold text-warning">{{ late_count or 0 }}</div>
-        <div class="small text-muted">Late</div>
-      </div>
-    </div>
-  </div>
+
   <div class="col-6 col-xl-2">
     <div class="card border-0 shadow-sm text-center h-100">
       <div class="card-body py-3">
@@ -90,9 +83,8 @@
         <select name="status" class="form-select form-select-sm">
           <option value="">All</option>
           <option value="Present" {% if filter_status == 'Present' %}selected{% endif %}>Present</option>
-          <option value="Late" {% if filter_status == 'Late' %}selected{% endif %}>Late</option>
           <option value="Absent" {% if filter_status == 'Absent' %}selected{% endif %}>Absent</option>
-          <option value="OD" {% if filter_status == 'OD' %}selected{% endif %}>OD</option>
+          <option value="OD" {% if filter_status == 'OD' %}selected{% endif %}>On Duty</option>
         </select>
       </div>
       <div class="col-auto">
@@ -130,19 +122,17 @@
           <td class="text-muted small">{{ loop.index }}</td>
           <td>{{ rec.date }}</td>
           <td class="text-muted small">{{ rec.day or '' }}</td>
-          <td>
-            {% if rec.status == 'Present' %}
-              <span class="badge bg-success">Present</span>
-            {% elif rec.status == 'Late' %}
-              <span class="badge bg-warning text-dark">Late</span>
-            {% elif rec.status == 'Absent' %}
-              <span class="badge bg-danger">Absent</span>
-            {% elif rec.status == 'OD' %}
-              <span class="badge bg-info">OD</span>
-            {% else %}
-              <span class="badge bg-secondary">{{ rec.status }}</span>
-            {% endif %}
-          </td>
+            <td>
+              {% if rec.status|upper in ['PRESENT', 'LATE', 'ON_TIME'] %}
+                <span class="badge bg-success">Present</span>
+              {% elif rec.status == 'Absent' %}
+                <span class="badge bg-danger">Absent</span>
+              {% elif rec.status == 'OD' %}
+                <span class="badge bg-info">On Duty</span>
+              {% else %}
+                <span class="badge bg-secondary">{{ rec.status }}</span>
+              {% endif %}
+            </td>
           <td class="text-muted small">{{ rec.reason or '—' }}</td>
         </tr>
         {% else %}

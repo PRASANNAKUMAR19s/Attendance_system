@@ -10,7 +10,7 @@
     <h2 class="fw-bold mb-0"><i class="bi bi-person-plus me-2"></i>Register New Student</h2>
     <p class="text-muted mb-0">Capture 13 face angles for accurate recognition</p>
   </div>
-  <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-secondary">
+  <a href="{{ url_for('faculty.dashboard') }}" class="btn btn-outline-secondary">
     <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
   </a>
 </div>
@@ -24,7 +24,7 @@
       </div>
       <div class="card-body">
         <form method="POST" enctype="multipart/form-data"
-              action="{{ url_for('admin.register_student') }}" id="registerForm" novalidate>
+              action="{{ url_for('faculty.register_student') }}" id="registerForm" novalidate>
 
           <div class="row g-3">
             <div class="col-12">
@@ -166,7 +166,7 @@
 {% block extra_js %}
 <script>
   const PHOTOS_REQUIRED = {{ photos_required }};
-  const UPLOAD_URL = "{{ url_for('admin.upload_photo', reg_no='__REG_NO__') }}";
+  const UPLOAD_URL = "{{ url_for('faculty.upload_photo', reg_no='__REG_NO__') }}";
 </script>
 <script src="{{ url_for('static', filename='js/camera.js') }}"></script>
 {% endblock %}

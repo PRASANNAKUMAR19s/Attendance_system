@@ -65,6 +65,11 @@ class Student:
         return _svc.delete_student(reg_no)
 
     @classmethod
+    def update(cls, reg_no: str, data: Dict[str, Any]) -> bool:
+        """Update student data.  Returns True on success."""
+        return _svc.update_student(reg_no, data)
+
+    @classmethod
     def count(cls) -> int:
         """Return total number of registered students."""
         return len(_svc.get_students())

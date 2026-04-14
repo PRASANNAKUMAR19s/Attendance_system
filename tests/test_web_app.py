@@ -123,7 +123,7 @@ class TestWebAuth:
         assert resp.status_code == 200
 
     def test_dashboard_requires_login(self, client):
-        resp = client.get("/admin/dashboard", follow_redirects=False)
+        resp = client.get("/faculty/dashboard", follow_redirects=False)
         assert resp.status_code in (301, 302, 308)
 
     def test_logout(self, flask_app):
@@ -141,23 +141,23 @@ class TestWebAuth:
 
 class TestAdminDashboard:
     def test_dashboard_loads(self, logged_in_client):
-        resp = logged_in_client.get("/admin/dashboard")
+        resp = logged_in_client.get("/faculty/dashboard")
         assert resp.status_code == 200
         assert b"Dashboard" in resp.data or b"dashboard" in resp.data.lower()
 
     def test_dashboard_shows_students(self, logged_in_client):
-        resp = logged_in_client.get("/admin/dashboard")
+        resp = logged_in_client.get("/faculty/dashboard")
         assert resp.status_code == 200
         assert b"TEST STUDENT A" in resp.data or b"622123207001" in resp.data
 
     def test_register_page_loads(self, logged_in_client):
-        resp = logged_in_client.get("/admin/students/register")
+        resp = logged_in_client.get("/faculty/register-student")
         assert resp.status_code == 200
         assert b"Register" in resp.data
 
     def test_register_student(self, logged_in_client):
         resp = logged_in_client.post(
-            "/admin/students/register",
+            "/faculty/register-student",
             data={
                 "reg_no":     "622123207099",
                 "name":       "NEW TEST STUDENT",
@@ -173,30 +173,9 @@ class TestAdminDashboard:
 
     def test_register_missing_fields(self, logged_in_client):
         resp = logged_in_client.post(
-            "/admin/students/register",
+            "/faculty/register-student",
             data={"reg_no": "", "name": ""},
             follow_redirects=True,
         )
         assert resp.status_code == 200
         assert b"required" in resp.data.lower()
-
-    def test_delete_student(self, logged_in_client):
-        # Register then delete
-        logged_in_client.post(
-            "/admin/students/register",
-            data={"reg_no": "DELETE_WEB_001", "name": "DELETE ME WEB",
-                  "department": "AI&DS", "year": "1"},
-            follow_redirects=True,
-        )
-        resp = logged_in_client.post(
-            "/admin/students/DELETE_WEB_001/delete",
-            follow_redirects=True,
-        )
-        assert resp.status_code == 200
-
-    def test_delete_nonexistent_student(self, logged_in_client):
-        resp = logged_in_client.post(
-            "/admin/students/DOES_NOT_EXIST/delete",
-            follow_redirects=True,
-        )
-        assert resp.status_code == 200

@@ -1,0 +1,155 @@
+{% extends "faculty_base.html" %}
+{% block title %}Notifications — Faculty Portal{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="fw-bold mb-0">
+      <i class="bi bi-bell me-2 text-faculty"></i>Email Notifications
+    </h2>
+    <p class="text-muted mb-0">Send attendance alerts to parents/guardians</p>
+  </div>
+  <a href="{{ url_for('faculty.dashboard') }}" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
+  </a>
+</div>
+
+<div class="row g-4">
+  <!-- Send Daily Summary -->
+  <div class="col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-header bg-white py-3">
+        <h5 class="mb-0"><i class="bi bi-envelope-plus me-2 text-success"></i>Send Daily Summary</h5>
+      </div>
+      <div class="card-body">
+        <p class="text-muted">Send attendance summary to tutor/HOD email.</p>
+        <form method="POST" action="{{ url_for('faculty.send_daily_summary') }}">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Date</label>
+            <input type="date" name="date" class="form-control" value="{{ today }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Send To (Email)</label>
+            <input type="email" name="to_email" class="form-control" 
+                   value="{{ config.TUTOR_EMAIL }}" placeholder="tutor@example.com">
+          </div>
+          <button type="submit" class="btn btn-success">
+            <i class="bi bi-send me-1"></i> Send Summary Email
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Absent Students Alerts -->
+  <div class="col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-header bg-white py-3">
+        <h5 class="mb-0"><i class="bi bi-exclamation-triangle me-2 text-danger"></i>Send Absent Alerts</h5>
+      </div>
+      <div class="card-body">
+        {% if absent_students %}
+        <p class="text-muted">Send attendance alerts to parents of absent students.</p>
+        <div class="table-responsive">
+          <table class="table table-sm table-hover">
+            <thead class="table-light">
+              <tr>
+                <th>Student</th>
+                <th>Period</th>
+                <th>Email</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for student in absent_students %}
+              <tr>
+                <td>
+                  <strong>{{ student.name }}</strong><br>
+                  <small class="text-muted">{{ student.reg_no }}</small>
+                </td>
+                <td>{{ student.period }}</td>
+                <td>
+                  {% if student.email %}
+                    <small>{{ student.email }}</small>
+                  {% else %}
+                    <span class="text-muted">No email</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if student.email %}
+                    <form method="POST" action="{{ url_for('faculty.send_alert') }}" style="display:inline;">
+                      <input type="hidden" name="reg_no" value="{{ student.reg_no }}">
+                      <input type="hidden" name="student_email" value="{{ student.email }}">
+                      <input type="hidden" name="date" value="{{ today }}">
+                      <input type="hidden" name="period" value="{{ student.period }}">
+                      <input type="hidden" name="status" value="{{ student.status }}">
+                      <button type="submit" class="btn btn-sm btn-danger">
+                        <i class="bi bi-send"></i> Send
+                      </button>
+                    </form>
+                  {% else %}
+                    <span class="text-muted">—</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+          <i class="bi bi-check-circle text-success" style="font-size: 3rem;"></i>
+          <p class="text-muted mt-2 mb-0">No absent students today!</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Email Configuration Info -->
+<div class="row mt-4">
+  <div class="col-12">
+    <div class="card shadow-sm">
+      <div class="card-header bg-white py-3">
+        <h5 class="mb-0"><i class="bi bi-gear me-2"></i>Email Configuration</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <h6>Current Settings:</h6>
+            <table class="table table-sm">
+              <tr>
+                <td><strong>SMTP Server:</strong></td>
+                <td>smtp.gmail.com:587</td>
+              </tr>
+              <tr>
+                <td><strong>Sender Email:</strong></td>
+                <td>{{ config.EMAIL_SENDER }}</td>
+              </tr>
+              <tr>
+                <td><strong>Tutor Email:</strong></td>
+                <td>{{ config.TUTOR_EMAIL }}</td>
+              </tr>
+            </table>
+          </div>
+          <div class="col-md-6">
+            <h6>Setup Instructions:</h6>
+            <ol class="small">
+              <li>Create a <strong>.env</strong> file in the project root</li>
+              <li>Add your Gmail credentials:</li>
+            </ol>
+            <pre class="bg-light p-2 rounded small">EMAIL_SENDER=your_email@gmail.com
+EMAIL_PASSWORD=your_app_password
+TUTOR_EMAIL=tutor@college.edu</pre>
+            <p class="small text-muted mb-0">
+              <strong>Note:</strong> For Gmail, use an "App Password" instead of your regular password.
+              Generate one at: myaccount.google.com → Security → 2-Step Verification → App passwords
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

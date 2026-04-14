@@ -1,0 +1,84 @@
+{% extends "faculty_base.html" %}
+
+{% block title %}Low Attendance Students - Attendance System{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h1 class="h2 text-danger">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>Low Attendance Students
+            </h1>
+            <p class="text-muted">Students with attendance below 75% threshold</p>
+        </div>
+        <div class="col-md-6 text-end">
+            <a href="{{ url_for('faculty.dashboard') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    {% if students %}
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <div class="alert alert-warning">
+                <i class="bi bi-info-circle me-2"></i>
+                <strong>{{ total }} student(s)</strong> have attendance below the required 75% threshold.
+                These students may not be eligible for examinations.
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-danger">
+                    <tr>
+                        <th>Reg. No</th>
+                        <th>Name</th>
+                        <th>Department</th>
+                        <th>Year</th>
+                        <th>Total Classes</th>
+                        <th>Present</th>
+                        <th>Attendance %</th>
+                        <th>Email</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in students %}
+                    <tr>
+                        <td><code>{{ s.reg_no }}</code></td>
+                        <td>{{ s.name }}</td>
+                        <td>{{ s.department }}</td>
+                        <td>{{ s.year }}{{'st' if s.year == 1 else 'nd' if s.year == 2 else 'rd' if s.year == 3 else 'th'}} Year</td>
+                        <td>{{ s.total_classes }}</td>
+                        <td>{{ s.present }}</td>
+                        <td>
+                            {% if s.attendance_pct < 50 %}
+                            <span class="badge bg-danger">{{ s.attendance_pct }}%</span>
+                            {% else %}
+                            <span class="badge bg-warning text-dark">{{ s.attendance_pct }}%</span>
+                            {% endif %}
+                        </td>
+                        <td><small>{{ s.email or '—' }}</small></td>
+                        <td>
+                            <a href="{{ url_for('faculty.view_student', reg_no=s.reg_no) }}" 
+                               class="btn btn-sm btn-outline-primary">
+                                View Details
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-success">
+        <i class="bi bi-check-circle-fill me-2"></i>
+        All students have adequate attendance (≥75%). Great job!
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

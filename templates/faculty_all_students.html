@@ -1,0 +1,196 @@
+{% extends "faculty_base.html" %}
+
+{% block title %}All Students - Attendance System{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h1 class="h2"><i class="bi bi-people-fill me-2"></i>All Students</h1>
+            <p class="text-muted">Total: {{ total_students }} registered students</p>
+        </div>
+        <div class="col-md-6 text-end">
+            <a href="{{ url_for('faculty.dashboard') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Search Form -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <input type="text" id="searchInput" class="form-control" placeholder="Search by name or register number...">
+                        </div>
+                        <div class="col-md-3">
+                            <select id="filterDepartment" class="form-select">
+                                <option value="">All Departments</option>
+                                <option value="AI&DS">AI & Data Science</option>
+                                <option value="CSE">Computer Science</option>
+                                <option value="ECE">Electronics</option>
+                                <option value="MECH">Mechanical</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select id="filterYear" class="form-select">
+                                <option value="">All Years</option>
+                                <option value="1">1st Year</option>
+                                <option value="2">2nd Year</option>
+                                <option value="3">3rd Year</option>
+                                <option value="4">4th Year</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button id="clearFilters" class="btn btn-outline-secondary w-100">
+                                <i class="bi bi-x-circle"></i> Clear
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Students Table -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0" id="studentsTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Register No</th>
+                                    <th>Name</th>
+                                    <th>Department</th>
+                                    <th>Year</th>
+                                    <th>Email</th>
+                                    <th>Phone</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for student in students %}
+                                <tr data-department="{{ student.department }}" data-year="{{ student.year }}">
+                                    <td><strong>{{ student.reg_no }}</strong></td>
+                                    <td>{{ student.name }}</td>
+                                    <td>{{ student.department }}</td>
+                                    <td>{{ student.year }}{{ 'st' if student.year == 1 else 'nd' if student.year == 2 else 'rd' if student.year == 3 else 'th' }} Year</td>
+                                    <td>{{ student.email or '-' }}</td>
+                                    <td>{{ student.phone or '-' }}</td>
+                                    <td>
+                                        <a href="{{ url_for('faculty.mark_attendance') }}?reg_no={{ student.reg_no }}" class="btn btn-sm btn-success">
+                                            <i class="bi bi-clipboard-check"></i> Mark
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                {% if not students %}
+                                <tr>
+                                    <td colspan="7" class="text-center text-muted py-4">
+                                        <i class="bi bi-people" style="font-size: 2rem;"></i>
+                                        <p class="mt-2 mb-0">No students registered yet</p>
+                                        <a href="{{ url_for('faculty.register_student') }}" class="btn btn-primary mt-2">
+                                            <i class="bi bi-person-plus"></i> Register First Student
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Student Detail Modal -->
+<div class="modal fade" id="studentModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="bi bi-person-badge"></i> Student Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="studentModalBody">
+                <div class="text-center">
+                    <div class="spinner-border text-primary" role="status"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <a href="#" id="modalMarkAttendance" class="btn btn-success">
+                    <i class="bi bi-clipboard-check"></i> Mark Attendance
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function viewStudent(regNo) {
+    const modal = new bootstrap.Modal(document.getElementById('studentModal'));
+    document.getElementById('studentModalBody').innerHTML = `
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-3">Loading student details...</p>
+        </div>
+    `;
+    modal.show();
+    
+    fetch(`/faculty/student/${regNo}`)
+        .then(response => response.text())
+        .then(html => {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const content = doc.querySelector('.student-detail-content');
+            document.getElementById('studentModalBody').innerHTML = content ? content.innerHTML : 'Error loading details';
+            document.getElementById('modalMarkAttendance').href = `/faculty/attendance?reg_no=${regNo}`;
+        })
+        .catch(error => {
+            document.getElementById('studentModalBody').innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle"></i> Error loading student details
+                </div>
+            `;
+        });
+}
+
+// Search and filter functionality
+document.getElementById('searchInput').addEventListener('input', filterTable);
+document.getElementById('filterDepartment').addEventListener('change', filterTable);
+document.getElementById('filterYear').addEventListener('change', filterTable);
+document.getElementById('clearFilters').addEventListener('click', function() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('filterDepartment').value = '';
+    document.getElementById('filterYear').value = '';
+    filterTable();
+});
+
+function filterTable() {
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const department = document.getElementById('filterDepartment').value;
+    const year = document.getElementById('filterYear').value;
+    const rows = document.querySelectorAll('#studentsTable tbody tr');
+    
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        const rowDept = row.dataset.department;
+        const rowYear = row.dataset.year;
+        
+        const matchesSearch = text.includes(search);
+        const matchesDept = !department || rowDept === department;
+        const matchesYear = !year || rowYear === year;
+        
+        row.style.display = matchesSearch && matchesDept && matchesYear ? '' : 'none';
+    });
+}
+</script>
+{% endblock %}

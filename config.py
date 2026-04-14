@@ -26,15 +26,15 @@ TUTOR_PASSWORD      = os.environ.get("TUTOR_PASSWORD", "paavai123")
 # ── Class Periods ──────────────────────────────────────────────────────────────
 # Format: ("Period Name", "HH:MM start", "HH:MM late after", "HH:MM end")
 PERIODS = [
-    ("Period 1",  "09:15", "09:25", "10:10"),
-    ("Period 2",  "10:10", "10:20", "11:05"),
+    ("Period 1",  "09:15", "09:25", "10:10"),   # 10 min grace
+    ("Period 2",  "10:10", "10:15", "11:05"),   # 5 min grace
     # Break: 11:05 - 11:15 (no attendance)
-    ("Period 3",  "11:15", "11:25", "12:10"),
-    ("Period 4",  "12:10", "12:20", "13:00"),
+    ("Period 3",  "11:15", "11:20", "12:10"),   # 5 min grace
+    ("Period 4",  "12:10", "12:15", "13:00"),   # 5 min grace
     # Lunch: 13:00 - 14:00 (no attendance)
-    ("Period 5",  "14:00", "14:10", "14:50"),
-    ("Period 6",  "14:50", "15:00", "15:40"),
-    ("Period 7",  "15:40", "15:50", "16:30"),
+    ("Period 5",  "14:00", "14:05", "14:50"),   # 5 min grace
+    ("Period 6",  "14:50", "14:55", "15:40"),   # 5 min grace
+    ("Period 7",  "15:40", "15:45", "16:30"),   # 5 min grace
 ]
 
 # ── Email Settings ─────────────────────────────────────────────────────────────

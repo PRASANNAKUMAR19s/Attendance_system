@@ -1,154 +1,161 @@
 {% extends "faculty_base.html" %}
-{% block title %}Live Monitoring — Faculty Portal{% endblock %}
+{% block title %}Live Monitoring - AI Attendance System{% endblock %}
 
 {% block extra_css %}
 <style>
-  .camera-placeholder {
-    background: #1a1a2e;
-    border-radius: 8px;
-    min-height: 320px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #fff;
+  #videoCanvas, #processedCanvas { display: none; }
+  #cameraFeed {
+    width: 100%;
+    max-height: 400px;
+    border-radius: 12px;
+    border: 3px solid #198754;
+    background: #000;
   }
-  .status-indicator {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    display: inline-block;
+  .camera-active {
+    border-color: #198754 !important;
   }
-  .status-on { background-color: #28a745; }
-  .status-off { background-color: #dc3545; }
-  .alert-log { max-height: 300px; overflow-y: auto; }
+  .live-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #dc3545;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+  }
+  .face-card {
+    border-left: 4px solid #28a745;
+    transition: all 0.3s ease;
+  }
+  .detected-card {
+    background: linear-gradient(135deg, #d4edda, #c3e6cb);
+  }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <div>
-    <h2 class="fw-bold mb-0">
-      <i class="bi bi-camera-video me-2 text-faculty"></i>Live Classroom Monitoring
-    </h2>
-    <p class="text-muted mb-0">Real-time classroom surveillance and environmental status</p>
+<div class="container-fluid py-3">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h2 class="fw-bold mb-0">
+        <i class="bi bi-camera-video me-2 text-primary"></i>Live Monitoring
+      </h2>
+      <p class="text-muted mb-0 small">Real-time face recognition attendance</p>
+    </div>
+    <div class="d-flex gap-2">
+      <button class="btn btn-sm btn-success" id="btnStart">
+        <i class="bi bi-play me-1"></i> Start Camera
+      </button>
+      <button class="btn btn-sm btn-danger" id="btnStop" disabled>
+        <i class="bi bi-stop me-1"></i> Stop Camera
+      </button>
+      <a href="{{ url_for('faculty.dashboard') }}" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Dashboard
+      </a>
+    </div>
   </div>
-  <div class="d-flex gap-2">
-    <span class="badge bg-success py-2 px-3 d-flex align-items-center gap-1" id="liveIndicator">
-      <span class="status-indicator status-on"></span> Live
-    </span>
-    <a href="{{ url_for('faculty.dashboard') }}" class="btn btn-outline-secondary">
-      <i class="bi bi-arrow-left me-1"></i> Back
-    </a>
-  </div>
-</div>
 
-<div class="row g-3 mb-4">
-  <!-- Camera feed -->
-  <div class="col-lg-8">
-    <div class="card border-0 shadow-sm h-100">
-      <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-3">
-        <span><i class="bi bi-camera-video-fill me-1"></i> Camera Feed — Classroom</span>
-        <div class="d-flex gap-2">
-          <button class="btn btn-sm btn-outline-light" id="toggleCamera">
-            <i class="bi bi-record-circle"></i> Record
-          </button>
-          <button class="btn btn-sm btn-outline-light" id="captureSnapshot">
-            <i class="bi bi-camera"></i> Snapshot
-          </button>
+  <div class="row g-3">
+    <!-- Camera Feed -->
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
+          <span class="fw-semibold"><i class="bi bi-camera-video-fill me-1 text-success"></i> Camera Feed</span>
+          <select id="cameraSelect" class="form-select form-select-sm" style="width: auto;">
+            <option value="0">Camera 0</option>
+          </select>
         </div>
-      </div>
-      <div class="card-body p-2">
-        <div class="camera-placeholder">
-          {% if camera_url %}
-          <img src="{{ camera_url }}" class="img-fluid rounded" alt="Live camera feed" style="max-height:320px;" />
-          {% else %}
-          <div class="text-center">
-            <i class="bi bi-camera-video-off fs-1 mb-2 opacity-50"></i>
-            <p class="mb-0 opacity-75">Camera feed unavailable</p>
-            <p class="small opacity-50">Connect a camera to enable live monitoring</p>
+        <div class="card-body p-2">
+          <div class="position-relative">
+            <video id="cameraFeed" autoplay muted playsinline style="display:none;"></video>
+            <canvas id="videoCanvas"></canvas>
+            <canvas id="processedCanvas"></canvas>
+            <div id="cameraPlaceholder" class="bg-dark rounded p-5 text-center">
+              <i class="bi bi-camera-video-off text-white" style="font-size: 4rem;"></i>
+              <p class="text-white mt-3 mb-0">Click "Start Camera" to begin</p>
+              <p class="text-white-50 small">Browser will ask for camera permission</p>
+            </div>
+            <div class="live-badge" id="liveBadge" style="display: none;">
+              <i class="bi bi-record-circle me-1"></i> LIVE
+            </div>
           </div>
-          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Detected Students -->
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-white py-2 fw-semibold">
+          <i class="bi bi-people me-1 text-success"></i> Detected Students
+          <span class="badge bg-success float-end" id="detectedCount">0</span>
+        </div>
+        <div class="card-body p-0">
+          <div id="detectedList" style="max-height: 300px; overflow-y: auto;">
+            <div class="text-center text-muted py-4">
+              <i class="bi bi-person-badge fs-3 opacity-25"></i>
+              <p class="mb-0 mt-2 small">No faces detected</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="card border-0 shadow-sm mt-3">
+        <div class="card-header bg-white py-2 fw-semibold">
+          <i class="bi bi-lightning-fill me-1 text-warning"></i> Quick Actions
+        </div>
+        <div class="card-body">
+          <div class="d-grid gap-2">
+            <a href="{{ url_for('faculty.face_recognition') }}" class="btn btn-outline-primary btn-sm">
+              <i class="bi bi-robot me-1"></i> Open AI Attendance
+            </a>
+            <a href="{{ url_for('faculty.mark_attendance') }}" class="btn btn-outline-secondary btn-sm">
+              <i class="bi bi-check2-square me-1"></i> Manual Marking
+            </a>
+            <a href="{{ url_for('faculty.review_attendance') }}" class="btn btn-outline-info btn-sm">
+              <i class="bi bi-pencil-square me-1"></i> Review Attendance
+            </a>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Classroom status -->
-  <div class="col-lg-4">
-    <div class="card border-0 shadow-sm h-100">
-      <div class="card-header bg-white py-3 fw-semibold">
-        <i class="bi bi-building me-1 text-faculty"></i> Classroom Status
-      </div>
-      <div class="card-body">
-        <ul class="list-group list-group-flush">
-          <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-            <span><i class="bi bi-lightbulb me-2 text-warning"></i> Lights</span>
-            <span class="badge {% if classroom_status.lights %}bg-success{% else %}bg-secondary{% endif %} rounded-pill">
-              {% if classroom_status.lights %}ON{% else %}OFF{% endif %}
-            </span>
-          </li>
-          <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-            <span><i class="bi bi-fan me-2 text-info"></i> Fans</span>
-            <span class="badge {% if classroom_status.fans %}bg-success{% else %}bg-secondary{% endif %} rounded-pill">
-              {% if classroom_status.fans %}ON{% else %}OFF{% endif %}
-            </span>
-          </li>
-          <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-            <span><i class="bi bi-window me-2 text-primary"></i> Windows</span>
-            <span class="badge {% if classroom_status.windows %}bg-success{% else %}bg-secondary{% endif %} rounded-pill">
-              {% if classroom_status.windows %}OPEN{% else %}CLOSED{% endif %}
-            </span>
-          </li>
-          <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-            <span><i class="bi bi-people me-2 text-success"></i> Occupancy</span>
-            <span class="fw-semibold">{{ classroom_status.occupancy or '—' }}</span>
-          </li>
-          <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-            <span><i class="bi bi-thermometer-half me-2 text-danger"></i> Temperature</span>
-            <span class="fw-semibold">{{ classroom_status.temperature or '—' }}°C</span>
-          </li>
-        </ul>
-      </div>
+  <!-- Detection Log -->
+  <div class="card border-0 shadow-sm mt-3">
+    <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
+      <span class="fw-semibold"><i class="bi bi-activity me-1"></i> Detection Log</span>
+      <button class="btn btn-sm btn-outline-secondary" id="clearLog">
+        <i class="bi bi-trash me-1"></i> Clear
+      </button>
     </div>
-  </div>
-</div>
-
-<!-- Alert log -->
-<div class="card border-0 shadow-sm">
-  <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
-    <span class="fw-semibold">
-      <i class="bi bi-bell me-1 text-warning"></i> Alert Log
-    </span>
-    <button class="btn btn-sm btn-outline-secondary" id="clearAlerts">
-      <i class="bi bi-trash me-1"></i> Clear
-    </button>
-  </div>
-  <div class="card-body p-0">
-    <div class="alert-log">
-      <table class="table table-sm table-hover mb-0">
-        <thead class="table-light sticky-top">
-          <tr>
-            <th style="width:160px;">Time</th>
-            <th>Event</th>
-            <th style="width:100px;">Type</th>
-          </tr>
-        </thead>
-        <tbody id="alertLogBody">
-          {% for alert in alert_log %}
-          <tr>
-            <td class="text-muted small">{{ alert.timestamp }}</td>
-            <td>{{ alert.message }}</td>
-            <td>
-              <span class="badge bg-{{ alert.level or 'secondary' }}">{{ alert.type or 'Info' }}</span>
-            </td>
-          </tr>
-          {% else %}
-          <tr id="noAlerts">
-            <td colspan="3" class="text-center text-muted py-3">No alerts recorded.</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+    <div class="card-body p-0">
+      <div style="max-height: 200px; overflow-y: auto;">
+        <table class="table table-sm table-hover mb-0">
+          <thead class="table-light sticky-top">
+            <tr>
+              <th>Time</th>
+              <th>Student</th>
+              <th>Reg. No</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="logBody">
+            <tr>
+              <td colspan="4" class="text-center text-muted py-3">Start camera to detect faces</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </div>
@@ -156,27 +163,173 @@
 
 {% block extra_js %}
 <script>
-  // Auto-refresh classroom status every 30 seconds
-  setInterval(function () {
-    fetch("{{ url_for('faculty.monitoring_status') }}")
-      .then(function (r) { return r.json(); })
-      .then(function (data) {
-        if (data.alert) {
-          var tbody = document.getElementById("alertLogBody");
-          var noAlerts = document.getElementById("noAlerts");
-          if (noAlerts) noAlerts.remove();
-          var row = "<tr><td class=\"text-muted small\">" + data.alert.timestamp + "</td>" +
-                    "<td>" + data.alert.message + "</td>" +
-                    "<td><span class=\"badge bg-warning text-dark\">" + (data.alert.type || "Info") + "</span></td></tr>";
-          tbody.insertAdjacentHTML("afterbegin", row);
-        }
-      })
-      .catch(function () {});
-  }, 30000);
+const PROCESS_URL = "{{ url_for('faculty.face_recognition_process') }}";
+const STATS_URL = "{{ url_for('faculty.face_recognition_stats') }}";
 
-  document.getElementById("clearAlerts").addEventListener("click", function () {
-    var tbody = document.getElementById("alertLogBody");
-    tbody.innerHTML = "<tr id=\"noAlerts\"><td colspan=\"3\" class=\"text-center text-muted py-3\">No alerts recorded.</td></tr>";
+let video = null;
+let canvas = null;
+let ctx = null;
+let isStreaming = false;
+let statsInterval = null;
+let detectedStudents = new Set();
+
+document.addEventListener('DOMContentLoaded', function() {
+  video = document.getElementById('cameraFeed');
+  canvas = document.getElementById('videoCanvas');
+  ctx = canvas.getContext('2d');
+  
+  document.getElementById('btnStart').addEventListener('click', startCamera);
+  document.getElementById('btnStop').addEventListener('click', stopCamera);
+  document.getElementById('clearLog').addEventListener('click', clearLog);
+});
+
+async function startCamera() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    video.srcObject = stream;
+    video.style.display = 'block';
+    document.getElementById('cameraPlaceholder').style.display = 'none';
+    document.getElementById('liveBadge').style.display = 'block';
+    document.getElementById('btnStart').disabled = true;
+    document.getElementById('btnStop').disabled = false;
+    
+    isStreaming = true;
+    processFrame();
+    
+    // Poll stats every 3 seconds
+    statsInterval = setInterval(updateStats, 3000);
+  } catch (err) {
+    alert('Camera error: ' + err.message + '\n\nPlease allow camera access and try again.');
+    console.error('Camera error:', err);
+  }
+}
+
+function stopCamera() {
+  if (video.srcObject) {
+    video.srcObject.getTracks().forEach(track => track.stop());
+  }
+  video.style.display = 'none';
+  document.getElementById('cameraPlaceholder').style.display = 'flex';
+  document.getElementById('liveBadge').style.display = 'none';
+  document.getElementById('btnStart').disabled = false;
+  document.getElementById('btnStop').disabled = true;
+  
+  isStreaming = false;
+  if (statsInterval) clearInterval(statsInterval);
+}
+
+function processFrame() {
+  if (!isStreaming) return;
+  
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  ctx.drawImage(video, 0, 0);
+  
+  // Send frame to server for processing
+  const dataUrl = canvas.toDataURL('image/jpeg', 0.5);
+  
+  fetch(PROCESS_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ frame: dataUrl })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success && data.faces) {
+      updateDetectedStudents(data.faces);
+    }
+  })
+  .catch(err => console.log('Process error:', err));
+  
+  // Process next frame after 100ms
+  setTimeout(processFrame, 100);
+}
+
+function updateDetectedStudents(faces) {
+  const container = document.getElementById('detectedList');
+  const countBadge = document.getElementById('detectedCount');
+  
+  if (!faces || faces.length === 0) {
+    container.innerHTML = `
+      <div class="text-center text-muted py-4">
+        <i class="bi bi-person-badge fs-3 opacity-25"></i>
+        <p class="mb-0 mt-2 small">No faces detected</p>
+      </div>
+    `;
+    countBadge.textContent = '0';
+    return;
+  }
+  
+  countBadge.textContent = faces.length;
+  
+  container.innerHTML = faces.map(face => `
+    <div class="list-group-item face-card detected-card">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <strong>${face.name}</strong>
+          <br><small class="text-muted">${face.reg_no}</small>
+        </div>
+        <span class="badge bg-success rounded-pill">
+          <i class="bi bi-check-circle me-1"></i> Present
+        </span>
+      </div>
+      <small class="text-muted">Confidence: ${Math.round(face.confidence)}%</small>
+    </div>
+  `).join('');
+  
+  // Update log
+  faces.forEach(face => {
+    if (!detectedStudents.has(face.reg_no) && face.name !== 'Unknown') {
+      detectedStudents.add(face.reg_no);
+      addLogEntry(face);
+    }
   });
+}
+
+function updateStats() {
+  if (!isStreaming) return;
+  
+  fetch(STATS_URL)
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        console.log('Stats:', data.stats);
+      }
+    })
+    .catch(err => console.log('Stats error:', err));
+}
+
+function addLogEntry(student) {
+  const tbody = document.getElementById('logBody');
+  const time = new Date().toLocaleTimeString();
+  
+  const row = `
+    <tr class="table-success">
+      <td class="small text-muted">${time}</td>
+      <td>${student.name}</td>
+      <td><code>${student.reg_no}</code></td>
+      <td><span class="badge bg-success">Present</span></td>
+    </tr>
+  `;
+  
+  if (tbody.querySelector('td[colspan]')) {
+    tbody.innerHTML = '';
+  }
+  
+  tbody.insertAdjacentHTML('afterbegin', row);
+  
+  while (tbody.children.length > 20) {
+    tbody.removeChild(tbody.lastChild);
+  }
+}
+
+function clearLog() {
+  detectedStudents.clear();
+  document.getElementById('logBody').innerHTML = `
+    <tr>
+      <td colspan="4" class="text-center text-muted py-3">Log cleared - Start camera to detect faces</td>
+    </tr>
+  `;
+}
 </script>
 {% endblock %}

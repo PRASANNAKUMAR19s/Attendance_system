@@ -145,7 +145,7 @@ class FirebaseService:
         if self.use_firebase:
             self._db.collection("students").document(reg_no).set(record)
         else:
-            self._csv_add_student(reg_no, name)
+            self._csv_add_student(reg_no, name, department, year, email, phone)
         return record
 
     def update_student(self, reg_no: str, data: Dict[str, Any]) -> Dict[str, Any]:
@@ -201,6 +201,14 @@ class FirebaseService:
         else:
             self._csv_mark_attendance(reg_no, name, date, period, marked_time, status)
         return record
+
+    def delete_attendance(self, reg_no: str, date: str, period: str) -> bool:
+        """Delete a specific attendance record."""
+        if self.use_firebase:
+            doc_id = f"{reg_no}_{date}_{period}"
+            self._db.collection("attendance").document(doc_id).delete()
+            return True
+        return self._csv_delete_attendance(reg_no, date, period)
 
     def get_attendance(
         self,
@@ -335,7 +343,7 @@ class FirebaseService:
             return students
         with open(students_file, newline="", encoding="utf-8") as f:
             for row in csv.DictReader(f):
-                raw_year = row.get("year", "")
+                raw_year = row.get("Year", row.get("year", ""))
                 try:
                     year = int(raw_year) if raw_year else 0
                 except (ValueError, TypeError):
@@ -344,22 +352,29 @@ class FirebaseService:
                     {
                         "reg_no": row.get("RegNo", row.get("reg_no", "")),
                         "name": row.get("Name", row.get("name", "")),
-                        "department": row.get("department", ""),
+                        "department": row.get("Department", row.get("department", "")),
                         "year": year,
-                        "email": row.get("email", ""),
-                        "phone": row.get("phone", ""),
+                        "email": row.get("Email", row.get("email", "")),
+                        "phone": row.get("Phone", row.get("phone", "")),
                     }
                 )
         return students
 
-    def _csv_add_student(self, reg_no: str, name: str) -> None:
+    def _csv_add_student(self, reg_no: str, name: str, department: str = "", year: int = 1, email: str = "", phone: str = "") -> None:
         students_file = _config.STUDENTS_FILE
         file_exists = os.path.isfile(students_file)
         with open(students_file, "a", newline="", encoding="utf-8") as f:
-            writer = csv.writer(f)
+            writer = csv.DictWriter(f, fieldnames=["RegNo", "Name", "Department", "Year", "Email", "Phone"])
             if not file_exists:
-                writer.writerow(["RegNo", "Name"])
-            writer.writerow([reg_no, name])
+                writer.writeheader()
+            writer.writerow({
+                "RegNo": reg_no,
+                "Name": name,
+                "Department": department,
+                "Year": year,
+                "Email": email,
+                "Phone": phone
+            })
 
     def _csv_update_student(
         self, reg_no: str, data: Dict[str, Any]
@@ -367,18 +382,19 @@ class FirebaseService:
         updated: Dict[str, Any] = {}
         rows: List[Dict[str, str]] = []
         students_file = _config.STUDENTS_FILE
+        fieldnames = ["RegNo", "Name", "Department", "Year", "Email", "Phone"]
         if os.path.isfile(students_file):
             with open(students_file, newline="", encoding="utf-8") as f:
                 reader = csv.DictReader(f)
-                fieldnames = reader.fieldnames or ["RegNo", "Name"]
                 for row in reader:
                     key = row.get("RegNo", row.get("reg_no", ""))
                     if key == reg_no:
-                        row.update(
-                            {k: str(v) for k, v in data.items()}
-                        )
+                        for k, v in data.items():
+                            row[k] = str(v) if v is not None else ""
                         updated = dict(row)
-                    rows.append(row)
+                    # Only keep keys that are in fieldnames
+                    cleaned_row = {k: row.get(k, "") for k in fieldnames}
+                    rows.append(cleaned_row)
             with open(students_file, "w", newline="", encoding="utf-8") as f:
                 writer = csv.DictWriter(f, fieldnames=fieldnames)
                 writer.writeheader()
@@ -391,15 +407,17 @@ class FirebaseService:
             return False
         rows: List[Dict[str, str]] = []
         found = False
+        fieldnames = ["RegNo", "Name", "Department", "Year", "Email", "Phone"]
         with open(students_file, newline="", encoding="utf-8") as f:
             reader = csv.DictReader(f)
-            fieldnames = reader.fieldnames or ["RegNo", "Name"]
             for row in reader:
                 key = row.get("RegNo", row.get("reg_no", ""))
                 if key == reg_no:
                     found = True
                 else:
-                    rows.append(row)
+                    # Only keep keys that are in fieldnames
+                    cleaned_row = {k: row.get(k, "") for k in fieldnames}
+                    rows.append(cleaned_row)
         if found:
             with open(students_file, "w", newline="", encoding="utf-8") as f:
                 writer = csv.DictWriter(f, fieldnames=fieldnames)
@@ -416,20 +434,58 @@ class FirebaseService:
         marked_time: str,
         status: str,
     ) -> None:
-        safe = _safe_date(date)  # Validates date is YYYY-MM-DD before path use
+        safe = _safe_date(date)
         attendance_dir = os.path.realpath(_config.ATTENDANCE_DIR)
         os.makedirs(attendance_dir, exist_ok=True)
         path = os.path.realpath(os.path.join(attendance_dir, f"attendance_{safe}.csv"))
         if not path.startswith(attendance_dir + os.sep) and path != attendance_dir:
             raise ValueError("Unsafe attendance file path detected.")
-        file_exists = os.path.isfile(path)
-        with open(path, "a", newline="", encoding="utf-8") as f:
-            writer = csv.writer(f)
-            if not file_exists:
-                writer.writerow(
-                    ["RegNo", "Name", "Date", "Period", "MarkedTime", "Status"]
-                )
-            writer.writerow([reg_no, name, date, period, marked_time, status])
+        
+        fieldnames = ["RegNo", "Name", "Date", "Period", "MarkedTime", "Status"]
+        existing_records = []
+        
+        if os.path.isfile(path):
+            with open(path, newline="", encoding="utf-8") as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    if row.get("RegNo") == reg_no and row.get("Period") == period:
+                        continue
+                    existing_records.append(row)
+        
+        with open(path, "w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerows(existing_records)
+            writer.writerow({"RegNo": reg_no, "Name": name, "Date": date, "Period": period, "MarkedTime": marked_time, "Status": status})
+
+    def _csv_delete_attendance(self, reg_no: str, date: str, period: str) -> bool:
+        """Delete a specific attendance record from CSV."""
+        safe = _safe_date(date)
+        attendance_dir = os.path.realpath(_config.ATTENDANCE_DIR)
+        path = os.path.realpath(os.path.join(attendance_dir, f"attendance_{safe}.csv"))
+        if not path.startswith(attendance_dir + os.sep) and path != attendance_dir:
+            return False
+        if not os.path.isfile(path):
+            return False
+        
+        rows = []
+        found = False
+        fieldnames = ["RegNo", "Name", "Date", "Period", "MarkedTime", "Status"]
+        with open(path, newline="", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                if row.get("RegNo") == reg_no and row.get("Period") == period:
+                    found = True
+                else:
+                    rows.append(row)
+        
+        if found:
+            with open(path, "w", newline="", encoding="utf-8") as f:
+                writer = csv.DictWriter(f, fieldnames=fieldnames)
+                writer.writeheader()
+                writer.writerows(rows)
+        
+        return found
 
     def _csv_get_attendance(
         self,
@@ -444,6 +500,8 @@ class FirebaseService:
             else os.path.join(attendance_dir, "attendance_*.csv")
         )
         records: List[Dict[str, Any]] = []
+        name_to_student = self._get_name_to_regno_map()
+        
         for path in sorted(glob.glob(pattern)):
             real_path = os.path.realpath(path)
             if not real_path.startswith(attendance_dir + os.sep):
@@ -452,9 +510,14 @@ class FirebaseService:
                 continue
             with open(real_path, newline="", encoding="utf-8") as f:
                 for row in csv.DictReader(f):
+                    raw_reg_no = row.get("RegNo", row.get("reg_no", ""))
+                    student_name = row.get("Name", row.get("name", ""))
+                    
+                    mapped_reg_no = name_to_student.get(student_name, raw_reg_no)
+                    
                     r = {
-                        "reg_no": row.get("RegNo", row.get("reg_no", "")),
-                        "name": row.get("Name", row.get("name", "")),
+                        "reg_no": mapped_reg_no,
+                        "name": student_name,
                         "date": row.get("Date", row.get("date", "")),
                         "period": row.get("Period", row.get("period", "")),
                         "marked_time": row.get(
@@ -466,6 +529,10 @@ class FirebaseService:
                         continue
                     records.append(r)
         return records
+
+    def _get_name_to_regno_map(self) -> Dict[str, str]:
+        students = self._csv_get_students()
+        return {s["name"]: s["reg_no"] for s in students}
 
     def _csv_get_late_reasons(
         self,

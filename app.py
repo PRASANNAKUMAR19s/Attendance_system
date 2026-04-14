@@ -30,7 +30,8 @@ from flask import Flask, redirect, session, url_for
 
 import config as _config
 from database import init_db
-from routes import admin_bp, auth_bp, faculty_bp, student_portal_bp
+from extensions import jwt, limiter
+from routes import api_bp, auth_bp, faculty_bp, student_portal_bp
 
 # ---------------------------------------------------------------------------
 # Logging
@@ -56,25 +57,30 @@ def create_app() -> Flask:
     flask_app.config["MAX_CONTENT_LENGTH"]    = _config.MAX_CONTENT_LENGTH
     flask_app.config["UPLOAD_FOLDER"]         = _config.UPLOAD_FOLDER
     flask_app.config["WTF_CSRF_ENABLED"]      = True
+    flask_app.config["JWT_SECRET_KEY"]        = _config.JWT_SECRET_KEY
+    flask_app.config["JWT_ACCESS_TOKEN_EXPIRES"] = False
 
     # ── Initialise database ──────────────────────────────────────────────────
     init_db(flask_app)
 
     # ── Register Blueprints ──────────────────────────────────────────────────
     flask_app.register_blueprint(auth_bp)
-    flask_app.register_blueprint(admin_bp)
     flask_app.register_blueprint(faculty_bp)
     flask_app.register_blueprint(student_portal_bp)
+    flask_app.register_blueprint(api_bp, url_prefix="/api")
+
+    jwt.init_app(flask_app)
+    limiter.init_app(flask_app)
 
     # ── Root redirect ────────────────────────────────────────────────────────
     @flask_app.route("/")
     def index():
         role = session.get("role", "")
-        if role in ("tutor", "hod"):
+        if role in ("tutor", "hod", "admin"):
             return redirect(url_for("faculty.dashboard"))
         if role == "student":
             return redirect(url_for("student_portal.dashboard"))
-        return redirect(url_for("admin.dashboard"))
+        return redirect(url_for("auth.login"))
 
     # ── Security headers ─────────────────────────────────────────────────────
     @flask_app.after_request

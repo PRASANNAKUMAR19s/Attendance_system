@@ -40,7 +40,7 @@ Automated Student Attendance Monitoring System using **Face Recognition (LBPH)**
 │                                                                     │
 │  ┌──────────────┐    ┌──────────────┐    ┌────────────────────┐   │
 │  │  Camera /    │    │  REST API    │    │   Web Portal       │   │
-│  │  OpenCV      │───▶│  (api.py)    │◀──▶│  (8_web_portal.py) │   │
+│  │  OpenCV      │───▶│  (app.py)    │◀──▶│  (app.py) │   │
 │  │  Face Recog. │    │  JWT+Swagger  │    │  Bootstrap 5 UI    │   │
 │  └──────────────┘    └──────┬───────┘    └────────────────────┘   │
 │                             │                                       │
@@ -75,16 +75,16 @@ cp .env.example .env        # Edit .env with your settings
 ### 2. Run web portal
 
 ```bash
-python 8_web_portal.py
+python app.py
 # → http://localhost:5000
 ```
 
 ### 3. Run REST API
 
 ```bash
-python api.py
-# → http://localhost:5001
-# → Swagger docs: http://localhost:5001/api/docs
+python app.py
+# → http://localhost:5000
+# → Swagger docs: http://localhost:5000/api/docs
 ```
 
 ### 4. Face recognition pipeline
@@ -104,12 +104,12 @@ python 4_attendance_report.py   # Generate reports
 
 ```bash
 # Get JWT token
-curl -X POST http://localhost:5001/api/auth/login \
+curl -X POST http://localhost:5000/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"username": "tutor", "password": "paavai123"}'
 
 # Use token
-curl http://localhost:5001/api/students/ \
+curl http://localhost:5000/api/students/ \
   -H "Authorization: Bearer <your-token>"
 ```
 
@@ -130,7 +130,7 @@ curl http://localhost:5001/api/students/ \
 | GET | `/api/analytics/overview` | Advanced analytics |
 | GET | `/api/analytics/periods` | Configured periods |
 
-Full docs at: `http://localhost:5001/api/docs`
+Full docs at: `http://localhost:5000/api/docs`
 
 ---
 
@@ -158,7 +158,7 @@ Full docs at: `http://localhost:5001/api/docs`
 
 ```bash
 docker compose up --build    # start all services
-# API: http://localhost:5001
+# API: http://localhost:5000
 # Web: http://localhost:5000
 docker compose down          # stop
 ```
@@ -170,7 +170,7 @@ docker compose down          # stop
 ### Render.com
 1. Connect GitHub repo on https://render.com
 2. Build command: `pip install -r requirements.txt`
-3. Start command: `gunicorn -w 4 -b 0.0.0.0:$PORT api:app`
+3. Start command: `gunicorn -w 4 -b 0.0.0.0:$PORT app:app`
 4. Add environment variables from `.env.example`
 
 ### AWS EC2
@@ -185,7 +185,7 @@ docker compose up -d
 ```bash
 gcloud builds submit --tag gcr.io/YOUR_PROJECT/attendance-system
 gcloud run deploy attendance-system --image gcr.io/YOUR_PROJECT/attendance-system \
-  --platform managed --allow-unauthenticated --port 5001
+  --platform managed --allow-unauthenticated --port 5000
 ```
 
 ---
@@ -216,7 +216,7 @@ python -c "import bcrypt; print(bcrypt.hashpw(b'your_password', bcrypt.gensalt()
 
 ```bash
 pytest tests/ -v
-pytest tests/test_api.py -v       # API tests
+pytest tests/test_app.py -v       # API tests
 pytest tests/test_config.py -v    # Unit tests
 ```
 
@@ -247,7 +247,7 @@ pytest tests/test_config.py -v    # Unit tests
 
 ```
 Attendance_system/
-├── api.py                      # REST API (Flask-RESTX + JWT)
+├── app.py                      # REST API (Flask-RESTX + JWT)
 ├── firebase_service.py         # Firebase / CSV service layer
 ├── config.py                   # Configuration (env-variable aware)
 ├── migrate_to_firebase.py      # CSV → Firebase migration script

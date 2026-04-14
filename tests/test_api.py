@@ -59,12 +59,11 @@ def patch_paths(tmp_dir):
 @pytest.fixture(scope="session")
 def flask_app():
     """Create the Flask test application."""
-    # Import after patching env vars
-    from api import app as _app
-
-    _app.config["TESTING"] = True
-    _app.config["WTF_CSRF_ENABLED"] = False
-    yield _app
+    from app import create_app
+    app = create_app()
+    app.config["TESTING"] = True
+    app.config["WTF_CSRF_ENABLED"] = False
+    yield app
 
 
 @pytest.fixture()

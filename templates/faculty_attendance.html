@@ -42,7 +42,7 @@
             <th>Name</th>
             <th>Dept / Year</th>
             <th>Status</th>
-            <th>Reason (if absent/late)</th>
+            <th>Reason (if absent)</th>
           </tr>
         </thead>
         <tbody>
@@ -55,9 +55,8 @@
             <td>
               <select name="status_{{ s.reg_no }}" class="form-select form-select-sm status-select" style="min-width:120px;">
                 <option value="Present" selected>Present</option>
-                <option value="Late">Late</option>
                 <option value="Absent">Absent</option>
-                <option value="OD">OD</option>
+                <option value="OD">On Duty</option>
               </select>
             </td>
             <td>

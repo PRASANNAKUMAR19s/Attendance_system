@@ -84,5 +84,20 @@ class User:
         db.commit()
         return cls.get_by_username(username)  # type: ignore[return-value]
 
+    @classmethod
+    def get_all(cls) -> list["User"]:
+        """Return all users."""
+        db = get_db()
+        rows = db.execute("SELECT * FROM users WHERE is_active = 1").fetchall()
+        return [cls(row) for row in rows]
+
+    @classmethod
+    def delete(cls, username: str) -> bool:
+        """Soft-delete a user (set is_active = 0)."""
+        db = get_db()
+        db.execute("UPDATE users SET is_active = 0 WHERE username = ?", (username,))
+        db.commit()
+        return True
+
     def __repr__(self) -> str:
         return f"<User id={self.id} username={self.username!r} role={self.role!r}>"

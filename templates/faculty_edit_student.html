@@ -1,0 +1,123 @@
+{% extends "faculty_base.html" %}
+
+{% block title %}Edit Student - Attendance System{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h1 class="h2"><i class="bi bi-pencil-square me-2"></i>Edit Student</h1>
+            <p class="text-muted">{{ student.name }} ({{ student.reg_no }})</p>
+        </div>
+        <div class="col-md-6 text-end">
+            <a href="{{ url_for('faculty.view_student', reg_no=student.reg_no) }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Details
+            </a>
+        </div>
+    </div>
+
+    <!-- Edit Form -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="bi bi-person-badge me-2"></i>Student Information</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="reg_no" class="form-label fw-semibold">Register Number</label>
+                                <input type="text" class="form-control" id="reg_no" name="reg_no" 
+                                       value="{{ student.reg_no }}" required maxlength="20">
+                                <small class="text-warning">Warning: Changing this will break face recognition data!</small>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="name" class="form-label fw-semibold">Full Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="name" name="name" 
+                                       value="{{ student.name }}" required maxlength="100">
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="department" class="form-label fw-semibold">Department</label>
+                                <select class="form-select" id="department" name="department">
+                                    <option value="AI&DS" {% if student.department == 'AI&DS' %}selected{% endif %}>AI & Data Science</option>
+                                    <option value="CSE" {% if student.department == 'CSE' %}selected{% endif %}>Computer Science</option>
+                                    <option value="ECE" {% if student.department == 'ECE' %}selected{% endif %}>Electronics & Communication</option>
+                                    <option value="MECH" {% if student.department == 'MECH' %}selected{% endif %}>Mechanical</option>
+                                    <option value="CIVIL" {% if student.department == 'CIVIL' %}selected{% endif %}>Civil</option>
+                                    <option value="IT" {% if student.department == 'IT' %}selected{% endif %}>Information Technology</option>
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="year" class="form-label fw-semibold">Year</label>
+                                <select class="form-select" id="year" name="year">
+                                    <option value="1" {% if student.year == 1 %}selected{% endif %}>1st Year</option>
+                                    <option value="2" {% if student.year == 2 %}selected{% endif %}>2nd Year</option>
+                                    <option value="3" {% if student.year == 3 %}selected{% endif %}>3rd Year</option>
+                                    <option value="4" {% if student.year == 4 %}selected{% endif %}>4th Year</option>
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="email" class="form-label fw-semibold">Email</label>
+                                <input type="email" class="form-control" id="email" name="email" 
+                                       value="{{ student.email }}" placeholder="student@example.com">
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="phone" class="form-label fw-semibold">Phone</label>
+                                <input type="tel" class="form-control" id="phone" name="phone" 
+                                       value="{{ student.phone }}" placeholder="9876543210" maxlength="15">
+                            </div>
+                        </div>
+                        
+                        <hr class="my-4">
+                        
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-check-circle me-1"></i> Save Changes
+                            </button>
+                            <a href="{{ url_for('faculty.view_student', reg_no=student.reg_no) }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle me-1"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Info Card -->
+        <div class="col-lg-4">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h5><i class="bi bi-info-circle me-2"></i>Quick Info</h5>
+                    <hr>
+                    <p><strong>Register No:</strong> {{ student.reg_no }}</p>
+                    <p><strong>Current Name:</strong> {{ student.name }}</p>
+                    <p><strong>Department:</strong> {{ student.department }}</p>
+                    <p><strong>Year:</strong> {{ student.year }}</p>
+                </div>
+            </div>
+            
+            <div class="card mt-3 border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="bi bi-exclamation-triangle me-2"></i>Danger Zone</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small">Deleting a student will remove all their data including attendance records.</p>
+                    <form action="{{ url_for('faculty.delete_student', reg_no=student.reg_no) }}" method="POST" 
+                          onsubmit="return confirm('Are you sure you want to delete student {{ student.name }} ({{ student.reg_no }})? This cannot be undone!');">
+                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                            <i class="bi bi-trash me-1"></i> Delete Student
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

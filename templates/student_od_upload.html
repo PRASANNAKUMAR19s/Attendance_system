@@ -7,22 +7,30 @@
     <h2 class="fw-bold mb-0">
       <i class="bi bi-upload me-2" style="color:#00aa00;"></i>Upload OD Letter
     </h2>
-    <p class="text-muted mb-0">Submit an On-Duty leave request with supporting document</p>
+    <p class="text-muted mb-0">Upload your signed OD letter (signed by Tutor & HOD)</p>
   </div>
   <a href="{{ url_for('student_portal.dashboard') }}" class="btn btn-outline-secondary">
     <i class="bi bi-arrow-left me-1"></i> Back
   </a>
 </div>
 
-<div class="row justify-content-center">
+<div class="row g-3">
+  <!-- Upload Form -->
   <div class="col-lg-7">
     <div class="card border-0 shadow-sm">
       <div class="card-header bg-white py-3 fw-semibold">
-        <i class="bi bi-envelope-paper me-1" style="color:#00aa00;"></i> OD Request Form
+        <i class="bi bi-file-earmark-plus me-1 text-success"></i> Upload Signed OD Letter
       </div>
       <div class="card-body">
         <form method="POST" action="{{ url_for('student_portal.od_upload') }}"
               enctype="multipart/form-data" novalidate>
+
+          <div class="alert alert-warning d-flex align-items-start gap-2 mb-3">
+            <i class="bi bi-exclamation-triangle-fill mt-1 flex-shrink-0"></i>
+            <div class="small">
+              <strong>Important:</strong> Your OD letter must be signed by <strong>Tutor</strong> and <strong>HOD</strong> before uploading.
+            </div>
+          </div>
 
           <div class="mb-3">
             <label class="form-label fw-semibold">Student Register Number</label>
@@ -34,32 +42,24 @@
               OD Date <span class="text-danger">*</span>
             </label>
             <input type="date" id="od_date" name="od_date" class="form-control" required />
-            <div class="form-text">Date for which you are requesting On-Duty leave</div>
+            <div class="form-text">Date for which you need On-Duty leave</div>
           </div>
 
           <div class="mb-3">
             <label for="reason" class="form-label fw-semibold">
-              Reason <span class="text-danger">*</span>
+              Reason <span class="text-muted">(optional)</span>
             </label>
-            <textarea id="reason" name="reason" class="form-control" rows="3"
-                      placeholder="Describe the reason for the OD request…" required></textarea>
+            <textarea id="reason" name="reason" class="form-control" rows="2"
+                      placeholder="e.g., University Event, Interview, Workshop..."></textarea>
           </div>
 
           <div class="mb-3">
-            <label for="od_file" class="form-label fw-semibold">
-              Supporting Document <span class="text-muted small">(PDF or image)</span>
+            <label for="od_letter" class="form-label fw-semibold">
+              Upload Signed OD Letter <span class="text-danger">*</span>
             </label>
-            <input type="file" id="od_file" name="od_file" class="form-control"
-                   accept=".pdf,.jpg,.jpeg,.png" />
-            <div class="form-text">Upload the OD letter or proof document (optional but recommended)</div>
-          </div>
-
-          <div class="alert alert-info d-flex align-items-start gap-2 py-2">
-            <i class="bi bi-info-circle-fill mt-1 flex-shrink-0"></i>
-            <div class="small">
-              Your OD request will be reviewed by your faculty tutor. You can check the status
-              on the <a href="{{ url_for('student_portal.od_status') }}">OD Status</a> page.
-            </div>
+            <input type="file" id="od_letter" name="od_letter" class="form-control"
+                   accept=".pdf,.jpg,.jpeg,.png" required />
+            <div class="form-text">Upload the signed OD letter (PDF, JPG, or PNG)</div>
           </div>
 
           <div class="d-flex gap-2 justify-content-end mt-4">
@@ -67,51 +67,85 @@
               <i class="bi bi-x me-1"></i> Cancel
             </a>
             <button type="submit" class="btn btn-student">
-              <i class="bi bi-send me-1"></i> Submit OD Request
+              <i class="bi bi-cloud-upload me-1"></i> Upload Letter
             </button>
           </div>
         </form>
       </div>
     </div>
+  </div>
 
-    <!-- Previous submissions -->
-    {% if recent_submissions %}
-    <div class="card border-0 shadow-sm mt-3">
+  <!-- Instructions -->
+  <div class="col-lg-5">
+    <div class="card border-0 shadow-sm h-100">
       <div class="card-header bg-white py-3 fw-semibold">
-        <i class="bi bi-clock-history me-1"></i> Recent Submissions
+        <i class="bi bi-question-circle me-1 text-info"></i> How to Submit OD
       </div>
-      <div class="table-responsive">
-        <table class="table table-sm table-hover mb-0">
-          <thead class="table-light">
-            <tr>
-              <th>OD Date</th>
-              <th>Reason</th>
-              <th>Status</th>
-              <th>Submitted</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for sub in recent_submissions %}
-            <tr>
-              <td>{{ sub.od_date }}</td>
-              <td class="small text-muted">{{ sub.reason | truncate(50) }}</td>
-              <td>
-                {% if sub.status == 'approved' %}
-                  <span class="badge bg-success">Approved</span>
-                {% elif sub.status == 'rejected' %}
-                  <span class="badge bg-danger">Rejected</span>
-                {% else %}
-                  <span class="badge bg-warning text-dark">Pending</span>
-                {% endif %}
-              </td>
-              <td class="small text-muted">{{ sub.submitted_at }}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+      <div class="card-body">
+        <ol class="mb-0">
+          <li class="mb-3">
+            <strong>Download the OD Template</strong>
+            <p class="text-muted small mb-0 ms-2">Go to Downloads page and get the OD letter template.</p>
+          </li>
+          <li class="mb-3">
+            <strong>Fill in your Details</strong>
+            <p class="text-muted small mb-0 ms-2">Write your name, register number, and OD date.</p>
+          </li>
+          <li class="mb-3">
+            <strong>Get Signature from Tutor</strong>
+            <p class="text-muted small mb-0 ms-2">Meet your class tutor and get their signature.</p>
+          </li>
+          <li class="mb-3">
+            <strong>Get Signature from HOD</strong>
+            <p class="text-muted small mb-0 ms-2">Meet the HOD and get their signature and stamp.</p>
+          </li>
+          <li class="mb-0">
+            <strong>Upload the Signed Letter</strong>
+            <p class="text-muted small mb-0 ms-2">Upload here. No approval needed - you're done!</p>
+          </li>
+        </ol>
       </div>
     </div>
-    {% endif %}
   </div>
 </div>
+
+<!-- Recent Submissions -->
+{% if recent_submissions %}
+<div class="card border-0 shadow-sm mt-3">
+  <div class="card-header bg-white py-3 fw-semibold">
+    <i class="bi bi-clock-history me-1"></i> My Recent OD Letters
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>OD Date</th>
+          <th>Reason</th>
+          <th>File</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for sub in recent_submissions %}
+        <tr>
+          <td><strong>{{ sub.date }}</strong></td>
+          <td class="text-muted">{{ sub.reason or '—' }}</td>
+          <td>
+            <a href="{{ url_for('static', filename='od_uploads/' + sub.file) }}" 
+               class="btn btn-sm btn-outline-primary" target="_blank">
+              <i class="bi bi-eye me-1"></i> View
+            </a>
+          </td>
+          <td>
+            <span class="badge bg-success">
+              <i class="bi bi-check-circle me-1"></i> Uploaded
+            </span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
 {% endblock %}
