@@ -29,7 +29,9 @@ def test_forgot_and_reset_flow(client):
     # Create a student user within the application context
     from models.user import User
 
-    username = "TESTSTU001"
+    from uuid import uuid4
+
+    username = f"TESTSTU_{uuid4().hex[:8]}"
     email = "teststudent@example.com"
     app = client.application
     with app.app_context():
