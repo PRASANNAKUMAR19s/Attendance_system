@@ -15,13 +15,16 @@ import os
 from datetime import datetime
 from config import ATTENDANCE_DIR, LATE_REASONS_FILE
 
+
 # ── Paths ─────────────────────────────────────────────────────────────────────
 def get_today_path():
     today = datetime.now().strftime("%Y-%m-%d")
     return os.path.join(ATTENDANCE_DIR, f"attendance_{today}.csv")
 
+
 def get_date_path(date_str):
     return os.path.join(ATTENDANCE_DIR, f"attendance_{date_str}.csv")
+
 
 # ── Load attendance records ───────────────────────────────────────────────────
 def load_records(path):
@@ -29,6 +32,7 @@ def load_records(path):
         return []
     with open(path, newline="") as f:
         return list(csv.DictReader(f))
+
 
 # ── Save all records back ─────────────────────────────────────────────────────
 def save_records(path, records):
@@ -39,17 +43,28 @@ def save_records(path, records):
         writer.writeheader()
         writer.writerows(records)
 
+
 # ── Save reason to late_reasons.csv ──────────────────────────────────────────
 def save_reason(reg_no, name, period, reason, date):
     file_exists = os.path.isfile(LATE_REASONS_FILE)
     with open(LATE_REASONS_FILE, "a", newline="") as f:
         writer = csv.writer(f)
         if not file_exists:
-            writer.writerow(["RegNo", "Name", "Date", "Period", "Reason", "UpdatedBy", "UpdatedAt"])
-        writer.writerow([
-            reg_no, name, date, period, reason,
-            "Tutor", datetime.now().strftime("%H:%M:%S")
-        ])
+            writer.writerow(
+                ["RegNo", "Name", "Date", "Period", "Reason", "UpdatedBy", "UpdatedAt"]
+            )
+        writer.writerow(
+            [
+                reg_no,
+                name,
+                date,
+                period,
+                reason,
+                "Tutor",
+                datetime.now().strftime("%H:%M:%S"),
+            ]
+        )
+
 
 # ── View late comers ──────────────────────────────────────────────────────────
 def view_late_comers(records):
@@ -63,9 +78,12 @@ def view_late_comers(records):
     print(f"  {'#':<4} {'Reg No':<15} {'Name':<22} {'Period':<12} {'Time'}")
     print("─" * 65)
     for i, row in enumerate(late, 1):
-        print(f"  {i:<4} {row['RegNo']:<15} {row['Name']:<22} {row['Period']:<12} {row['MarkedTime']}")
+        print(
+            f"  {i:<4} {row['RegNo']:<15} {row['Name']:<22} {row['Period']:<12} {row['MarkedTime']}"
+        )
     print("─" * 65)
     return late
+
 
 # ── View absent students ──────────────────────────────────────────────────────
 def view_absents(records):
@@ -82,6 +100,7 @@ def view_absents(records):
         print(f"  {i:<4} {row['RegNo']:<15} {row['Name']:<22} {row['Period']:<12}")
     print("─" * 65 + "\n")
 
+
 # ── View full summary ─────────────────────────────────────────────────────────
 def view_full_summary(records):
     print("\n" + "─" * 70)
@@ -96,6 +115,7 @@ def view_full_summary(records):
             f" {row['Period']:<12} {status:<12} {row['MarkedTime']}"
         )
     print("─" * 70 + "\n")
+
 
 # ── Add reason for late comer ─────────────────────────────────────────────────
 def add_reason(records, path, date):
@@ -131,21 +151,21 @@ def add_reason(records, path, date):
 
     # Update status to Present with reason
     for row in records:
-        if (row["RegNo"]  == selected["RegNo"] and
-            row["Period"] == selected["Period"] and
-            row["Status"] == "LATE"):
+        if (
+            row["RegNo"] == selected["RegNo"]
+            and row["Period"] == selected["Period"]
+            and row["Status"] == "LATE"
+        ):
             row["Status"] = "Present(Reason)"
             break
 
     save_records(path, records)
-    save_reason(
-        selected["RegNo"], selected["Name"],
-        selected["Period"], reason, date
-    )
+    save_reason(selected["RegNo"], selected["Name"], selected["Period"], reason, date)
 
     print(f"\n  ✅ Updated! {selected['Name']} → Present (Reason recorded)")
     print(f"     Reason: {reason}\n")
     return records
+
 
 # ── Main Menu ─────────────────────────────────────────────────────────────────
 def tutor_portal():
@@ -174,12 +194,14 @@ def tutor_portal():
         records = load_records(path)
 
         on_time = sum(1 for r in records if r["Status"] == "ON_TIME")
-        late    = sum(1 for r in records if r["Status"] == "LATE")
-        absent  = sum(1 for r in records if r["Status"] == "Absent")
-        reason  = sum(1 for r in records if r["Status"] == "Present(Reason)")
+        late = sum(1 for r in records if r["Status"] == "LATE")
+        absent = sum(1 for r in records if r["Status"] == "Absent")
+        reason = sum(1 for r in records if r["Status"] == "Present(Reason)")
 
         print(f"\n  Date     : {date_str}")
-        print(f"  On Time  : {on_time}  |  Late: {late}  |  Absent: {absent}  |  Excused: {reason}")
+        print(
+            f"  On Time  : {on_time}  |  Late: {late}  |  Absent: {absent}  |  Excused: {reason}"
+        )
         print("\n  1. View Late Comers")
         print("  2. Add Reason for Late Comer → Mark Present")
         print("  3. View Absent Students")
@@ -206,6 +228,7 @@ def tutor_portal():
             break
         else:
             print("[ERROR] Enter 1-5 only.")
+
 
 if __name__ == "__main__":
     tutor_portal()

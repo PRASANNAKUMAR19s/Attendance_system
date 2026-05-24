@@ -19,21 +19,24 @@ import os
 import csv
 
 # ── Paths ──────────────────────────────────────────────────────────────────────
-CASCADE_PATH  = "haarcascade/haarcascade_frontalface_default.xml"
-DATASET_DIR   = "dataset"
+CASCADE_PATH = "haarcascade/haarcascade_frontalface_default.xml"
+DATASET_DIR = "dataset"
 STUDENTS_FILE = "students.csv"
+
 
 # ── Download Haar Cascade if missing ──────────────────────────────────────────
 def ensure_cascade():
     if not os.path.exists(CASCADE_PATH):
         print("[INFO] Downloading Haar Cascade XML...")
         import urllib.request
+
         url = (
             "https://raw.githubusercontent.com/opencv/opencv/master/"
             "data/haarcascades/haarcascade_frontalface_default.xml"
         )
         urllib.request.urlretrieve(url, CASCADE_PATH)
         print("[INFO] Downloaded successfully.")
+
 
 # ── Save student info to CSV ───────────────────────────────────────────────────
 def save_student_info(reg_no, name):
@@ -44,12 +47,13 @@ def save_student_info(reg_no, name):
             writer.writerow(["RollNo", "Name"])
         writer.writerow([reg_no, name])
 
+
 # ── Main Dataset Collection ───────────────────────────────────────────────────
 def collect_dataset():
     ensure_cascade()
 
     reg_no = input("\nEnter Student Registration Number : ").strip()
-    name   = input("Enter Student Name                : ").strip()
+    name = input("Enter Student Name                : ").strip()
 
     if not reg_no or not name:
         print("[ERROR] Registration number and name cannot be empty.")
@@ -59,7 +63,7 @@ def collect_dataset():
     save_student_info(reg_no, name)
 
     face_cascade = cv2.CascadeClassifier(CASCADE_PATH)
-    cam          = cv2.VideoCapture(0)
+    cam = cv2.VideoCapture(0)
 
     if not cam.isOpened():
         print("[ERROR] Cannot open webcam. Check camera connection.")
@@ -78,19 +82,19 @@ def collect_dataset():
             print("[ERROR] Failed to read from camera.")
             break
 
-        gray  = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         faces = face_cascade.detectMultiScale(
             gray, scaleFactor=1.3, minNeighbors=5, minSize=(60, 60)
         )
 
-        for (x, y, w, h) in faces:
+        for x, y, w, h in faces:
             count += 1
-            face_img = gray[y:y+h, x:x+w]
+            face_img = gray[y : y + h, x : x + w]
             filename = f"{DATASET_DIR}/User.{reg_no}.{count}.jpg"
             cv2.imwrite(filename, face_img)
 
             # Draw box and counter
-            cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
+            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
             cv2.putText(
                 frame,
                 f"Capturing: {count}/{total}",

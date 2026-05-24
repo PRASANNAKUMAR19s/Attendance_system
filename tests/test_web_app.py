@@ -37,13 +37,13 @@ def tmp_dir():
 def patch_paths(tmp_dir):
     import config as cfg
 
-    cfg.ATTENDANCE_DIR    = os.path.join(tmp_dir, "attendance")
-    cfg.STUDENTS_FILE     = os.path.join(tmp_dir, "students.csv")
+    cfg.ATTENDANCE_DIR = os.path.join(tmp_dir, "attendance")
+    cfg.STUDENTS_FILE = os.path.join(tmp_dir, "students.csv")
     cfg.LATE_REASONS_FILE = os.path.join(tmp_dir, "late_reasons.csv")
-    cfg.REPORTS_DIR       = os.path.join(tmp_dir, "reports")
-    cfg.UPLOAD_FOLDER     = os.path.join(tmp_dir, "dataset")
-    cfg.DATABASE_PATH     = os.path.join(tmp_dir, "test_web.db")
-    cfg.USE_FIREBASE      = False
+    cfg.REPORTS_DIR = os.path.join(tmp_dir, "reports")
+    cfg.UPLOAD_FOLDER = os.path.join(tmp_dir, "dataset")
+    cfg.DATABASE_PATH = os.path.join(tmp_dir, "test_web.db")
+    cfg.USE_FIREBASE = False
 
     os.makedirs(cfg.ATTENDANCE_DIR, exist_ok=True)
     os.makedirs(cfg.REPORTS_DIR, exist_ok=True)
@@ -59,8 +59,9 @@ def patch_paths(tmp_dir):
 @pytest.fixture(scope="session")
 def flask_app():
     from app import create_app as _create
+
     web = _create()
-    web.config["TESTING"]          = True
+    web.config["TESTING"] = True
     web.config["WTF_CSRF_ENABLED"] = False
     yield web
 
@@ -86,6 +87,7 @@ def logged_in_client(flask_app):
 
 
 # ── Auth tests ────────────────────────────────────────────────────────────────
+
 
 class TestWebAuth:
     def test_login_page_loads(self, client):
@@ -139,6 +141,7 @@ class TestWebAuth:
 
 # ── Admin dashboard tests ─────────────────────────────────────────────────────
 
+
 class TestAdminDashboard:
     def test_dashboard_loads(self, logged_in_client):
         resp = logged_in_client.get("/faculty/dashboard")
@@ -159,12 +162,12 @@ class TestAdminDashboard:
         resp = logged_in_client.post(
             "/faculty/register-student",
             data={
-                "reg_no":     "622123207099",
-                "name":       "NEW TEST STUDENT",
+                "reg_no": "622123207099",
+                "name": "NEW TEST STUDENT",
                 "department": "AI&DS",
-                "year":       "2",
-                "email":      "",
-                "phone":      "",
+                "year": "2",
+                "email": "",
+                "phone": "",
             },
             follow_redirects=True,
         )

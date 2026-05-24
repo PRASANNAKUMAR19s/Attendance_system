@@ -46,18 +46,20 @@ class EmailService:
     ) -> bool:
         """
         Send an email.
-        
+
         Args:
             to_email: Recipient email address
             subject: Email subject
             html_body: HTML content of the email
             text_body: Plain text alternative (optional)
-        
+
         Returns:
             True if sent successfully, False otherwise
         """
         if not self.is_configured():
-            logger.warning("Email service not configured. Skipping email to %s", to_email)
+            logger.warning(
+                "Email service not configured. Skipping email to %s", to_email
+            )
             return False
 
         try:
@@ -122,7 +124,7 @@ class EmailService:
                 <div class="content">
                     <p>Dear Parent/Guardian,</p>
                     <p>This is to inform you about your ward's attendance:</p>
-                    
+
                     <div class="details">
                         <table>
                             <tr>
@@ -148,9 +150,9 @@ class EmailService:
                             {f'<tr><td><strong>Reason:</strong></td><td>{reason}</td></tr>' if reason else ''}
                         </table>
                     </div>
-                    
+
                     <p>Please ensure your ward maintains regular attendance for better academic performance.</p>
-                    
+
                     <p>Regards,<br>{self.tutor_name}<br>Department of AI & Data Science<br>Paavai Engineering College</p>
                 </div>
                 <div class="footer">
@@ -164,16 +166,16 @@ class EmailService:
 
         text_body = f"""
         Paavai Engineering College - Attendance Alert
-        
+
         Dear Parent/Guardian,
-        
+
         Student: {student_name}
         Register No: {reg_no}
         Date: {date}
         Period: {period}
         Status: {status}
         {f'Reason: {reason}' if reason else ''}
-        
+
         Regards,
         {self.tutor_name}
         Department of AI & Data Science
@@ -253,7 +255,7 @@ class EmailService:
                             <p>Absent</p>
                         </div>
                     </div>
-                    
+
                     <h4>Attendance Details</h4>
                     <div class="details">
                         <table>
@@ -310,19 +312,19 @@ class EmailService:
                 </div>
                 <div class="content">
                     <p>Dear Parent/Guardian,</p>
-                    
+
                     <div class="warning">
                         <h3>Attendance: {attendance_pct}%</h3>
                     </div>
-                    
+
                     <p><strong>Student:</strong> {student_name}</p>
                     <p><strong>Register No:</strong> {reg_no}</p>
-                    
-                    <p>Your ward's attendance has fallen below the required threshold. 
+
+                    <p>Your ward's attendance has fallen below the required threshold.
                     Students are required to maintain at least 75% attendance to be eligible for examinations.</p>
-                    
+
                     <p>Please contact the department and ensure your ward attends classes regularly.</p>
-                    
+
                     <p>Regards,<br>{self.tutor_name}<br>Department of AI & Data Science</p>
                 </div>
                 <div class="footer">
@@ -372,7 +374,7 @@ class EmailService:
                     <div class="alert-box">
                         <strong>Student has left the campus early!</strong>
                     </div>
-                    
+
                     <div class="details">
                         <table>
                             <tr>
@@ -393,9 +395,9 @@ class EmailService:
                             </tr>
                         </table>
                     </div>
-                    
+
                     <p><strong>Action Required:</strong> Please verify this early departure.</p>
-                    
+
                     <p>Regards,<br>AI Attendance System<br>Paavai Engineering College</p>
                 </div>
                 <div class="footer">
@@ -408,3 +410,63 @@ class EmailService:
         """
 
         return self.send_email(to_email, subject, html_body)
+
+    def send_password_reset_link(
+        self,
+        to_email: str,
+        student_name: str,
+        reg_no: str,
+        reset_url: str,
+        expires_hours: int = 24,
+    ) -> bool:
+        """Send a secure password setup/reset link to a student."""
+        subject = f"Set up your student portal password - {reg_no}"
+        html_body = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+                .container {{ max-width: 640px; margin: 0 auto; padding: 20px; }}
+                .header {{ background: #0066cc; color: white; padding: 20px; text-align: center; }}
+                .content {{ padding: 24px; background: #f9f9f9; }}
+                .button {{ display: inline-block; background: #0066cc; color: white !important; text-decoration: none; padding: 12px 20px; border-radius: 6px; }}
+                .footer {{ text-align: center; padding: 20px; color: #666; font-size: 12px; }}
+                .details {{ background: white; padding: 16px; border-radius: 6px; margin: 16px 0; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h2>Student Account Setup</h2>
+                    <p>AI Attendance System</p>
+                </div>
+                <div class="content">
+                    <p>Dear {student_name},</p>
+                    <p>Your student portal account has been created. Use the secure link below to set your password:</p>
+                    <div class="details">
+                        <p><strong>Register No:</strong> {reg_no}</p>
+                        <p><strong>Link expires in:</strong> {expires_hours} hour(s)</p>
+                        <p style="margin-top: 18px;"><a class="button" href="{reset_url}">Set Password</a></p>
+                    </div>
+                    <p>If the button does not work, copy and paste this link into your browser:</p>
+                    <p><a href="{reset_url}">{reset_url}</a></p>
+                    <p>After setting your password, you can sign in to the student portal normally.</p>
+                    <p>Regards,<br>{self.tutor_name}<br>Paavai Engineering College</p>
+                </div>
+                <div class="footer">
+                    <p>This is an automated message from AI Attendance System.</p>
+                    <p>Please do not share this link with anyone.</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+
+        text_body = (
+            f"Student Account Setup\n\nDear {student_name},\n\n"
+            f"Your account has been created for register number {reg_no}.\n"
+            f"Use this secure link to set your password (expires in {expires_hours} hours):\n"
+            f"{reset_url}\n\nRegards,\n{self.tutor_name}\nPaavai Engineering College"
+        )
+        return self.send_email(to_email, subject, html_body, text_body)

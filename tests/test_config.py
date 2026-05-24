@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import csv
 import os
-import tempfile
 
 import pytest
 
@@ -24,10 +23,12 @@ os.environ.setdefault("USE_FIREBASE", "false")
 class TestConfig:
     def test_periods_count(self):
         import config
+
         assert len(config.PERIODS) == 7
 
     def test_periods_format(self):
         import config
+
         for name, start, late, end in config.PERIODS:
             assert isinstance(name, str)
             # Validate HH:MM format
@@ -38,16 +39,19 @@ class TestConfig:
 
     def test_confidence_threshold(self):
         import config
+
         assert 0 < config.CONFIDENCE_THRESHOLD <= 100
 
     def test_defaulter_threshold(self):
         import config
+
         assert 0 < config.DEFAULTER_THRESHOLD <= 100
 
     def test_env_override(self, monkeypatch):
         monkeypatch.setenv("CONFIDENCE_THRESHOLD", "80")
         import importlib
         import config
+
         importlib.reload(config)
         assert config.CONFIDENCE_THRESHOLD == 80
 
@@ -59,10 +63,11 @@ class TestFirebaseServiceCSV:
     @pytest.fixture()
     def svc(self, tmp_path):
         import config
-        config.STUDENTS_FILE     = str(tmp_path / "students.csv")
-        config.ATTENDANCE_DIR    = str(tmp_path / "attendance")
+
+        config.STUDENTS_FILE = str(tmp_path / "students.csv")
+        config.ATTENDANCE_DIR = str(tmp_path / "attendance")
         config.LATE_REASONS_FILE = str(tmp_path / "late_reasons.csv")
-        config.USE_FIREBASE      = False
+        config.USE_FIREBASE = False
         os.makedirs(config.ATTENDANCE_DIR, exist_ok=True)
 
         # Seed students.csv
@@ -73,6 +78,7 @@ class TestFirebaseServiceCSV:
             writer.writerow(["222", "BOB"])
 
         from firebase_service import FirebaseService
+
         return FirebaseService()
 
     # Students
@@ -106,7 +112,9 @@ class TestFirebaseServiceCSV:
 
     # Attendance
     def test_mark_attendance(self, svc):
-        record = svc.mark_attendance("111", "ALICE", "2026-01-01", "Period 1", "ON_TIME")
+        record = svc.mark_attendance(
+            "111", "ALICE", "2026-01-01", "Period 1", "ON_TIME"
+        )
         assert record["reg_no"] == "111"
         assert record["status"] == "ON_TIME"
 

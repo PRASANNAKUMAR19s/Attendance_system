@@ -2,57 +2,129 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <meta name="theme-color" content="#0066cc" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="description" content="AI Face Recognition Attendance System" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{% block title %}Faculty Portal — Attendance System{% endblock %}</title>
 
-  <!-- PWA -->
-  <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}" />
-  <link rel="apple-touch-icon" href="{{ url_for('static', filename='icon-192.png') }}" />
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   
   <!-- Bootstrap 5 -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
-        crossorigin="anonymous" />
-  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
-  <!-- Custom CSS -->
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
-  <style>
-    :root { --faculty-primary: #0066cc; }
-    .btn-faculty { background-color: var(--faculty-primary); border-color: var(--faculty-primary); color: #fff; }
-    .btn-faculty:hover { background-color: #0052a3; border-color: #0052a3; color: #fff; }
-    .text-faculty { color: var(--faculty-primary) !important; }
-    .bg-faculty { background-color: var(--faculty-primary) !important; }
-    .border-faculty { border-color: var(--faculty-primary) !important; }
-  </style>
+  
+  <!-- Enterprise CSS System -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/premium.css') }}" />
   {% block extra_css %}{% endblock %}
 </head>
-<body class="d-flex flex-column min-vh-100">
+<body>
+<!-- Dynamic Ambient Background -->
+<div class="bg-ambient-orb-1"></div>
+<div class="bg-ambient-orb-2"></div>
 
-  <!-- Faculty Navbar -->
-  {% include 'components/navbar_faculty.html' %}
+<div class="app-wrapper">
+  <!-- Left Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="p-4 border-bottom border-light">
+      <h4 class="mb-0 fw-bold text-primary" style="color: var(--primary-blue) !important;">
+        <i class="bi bi-shield-check me-2"></i>EduSync
+      </h4>
+      <div class="small text-muted mt-1 fw-bold text-uppercase" style="letter-spacing: 0.05em; font-size: 0.65rem;">Tutor & HOD Portal</div>
+    </div>
 
-  <!-- Flash messages -->
-  {% include 'components/alerts.html' %}
+    
+    <div class="d-flex flex-column gap-1 mt-3 px-2 flex-grow-1">
+      <small class="text-muted text-uppercase fw-semibold mb-2 ms-3" style="font-size: 0.7rem;">Main Menu</small>
+      
+      <a href="{{ url_for('faculty.dashboard') }}" class="nav-link-sidebar {% if request.endpoint == 'faculty.dashboard' %}active{% endif %}">
+        <i class="bi bi-grid-1x2"></i> Dashboard
+      </a>
+      <a href="{{ url_for('faculty.requests_portal') }}" class="nav-link-sidebar {% if request.endpoint == 'faculty.requests_portal' %}active{% endif %}">
+        <i class="bi bi-envelope-paper"></i> Requests Portal
+      </a>
+      <a href="{{ url_for('faculty.absent_list') }}" class="nav-link-sidebar {% if request.endpoint == 'faculty.absent_list' %}active{% endif %}">
+        <i class="bi bi-person-x"></i> Absentee List
+      </a>
+      <a href="{{ url_for('faculty.face_recognition') }}" class="nav-link-sidebar {% if request.endpoint == 'faculty.face_recognition' %}active{% endif %}">
+        <i class="bi bi-camera-video"></i> Live Attendance
+      </a>
+      
+      <small class="text-muted text-uppercase fw-semibold mt-4 mb-2 ms-3" style="font-size: 0.7rem;">Database</small>
+      <a href="{{ url_for('faculty.all_students') }}" class="nav-link-sidebar {% if request.endpoint == 'faculty.all_students' %}active{% endif %}">
+        <i class="bi bi-people"></i> Student Records
+      </a>
+      <a href="{{ url_for('faculty.add_students_page') }}" class="nav-link-sidebar {% if request.endpoint == 'faculty.add_students_page' %}active{% endif %}">
+        <i class="bi bi-person-plus"></i> Add Students
+      </a>
+      <a href="{{ url_for('faculty.mark_attendance') }}" class="nav-link-sidebar {% if request.endpoint == 'faculty.mark_attendance' %}active{% endif %}">
+        <i class="bi bi-pencil-square"></i> Manual Entry
+      </a>
 
-  <!-- Main content -->
-  <main class="flex-grow-1 container-fluid px-4 py-4">
-    {% block content %}{% endblock %}
+      
+      <small class="text-muted text-uppercase fw-semibold mt-4 mb-2 ms-3" style="font-size: 0.7rem;">Reports</small>
+      <a href="{{ url_for('faculty.reports') }}" class="nav-link-sidebar {% if request.endpoint == 'faculty.reports' %}active{% endif %}">
+        <i class="bi bi-file-earmark-bar-graph"></i> Analysis Reports
+      </a>
+      <a href="{{ url_for('faculty.low_attendance_students') }}" class="nav-link-sidebar {% if request.endpoint == 'faculty.low_attendance_students' %}active{% endif %}">
+        <i class="bi bi-exclamation-triangle"></i> Low Attendance
+      </a>
+    </div>
+    
+    <div class="p-3 border-top border-light">
+      <a href="{{ url_for('auth.logout') }}" class="nav-link-sidebar text-danger mb-0">
+        <i class="bi bi-box-arrow-left"></i> Logout
+      </a>
+    </div>
+  </aside>
+
+  <!-- Main Content Area -->
+  <main class="main-content">
+    
+    <!-- Top Nav (Mobile Toggle & Profile) -->
+    <header class="top-header">
+      <button class="btn btn-light d-lg-none me-auto" id="sidebarToggle">
+        <i class="bi bi-list fs-4"></i>
+      </button>
+      
+      <div class="d-flex align-items-center gap-3">
+        <div class="text-end d-none d-sm-block">
+          <div class="fw-semibold text-dark lh-1">{{ current_user.full_name if current_user else 'Professor' }}</div>
+          <div class="small text-muted">{% if current_user %}{{ current_user.role|title }}{% endif %}</div>
+        </div>
+        <div class="rounded-circle bg-primary-light d-flex align-items-center justify-content-center text-primary fw-bold border border-primary-light" style="width: 40px; height: 40px; background: var(--primary-light); color: var(--primary-blue);">
+          {{ current_user.full_name[0] if current_user and current_user.full_name else 'P' }}
+        </div>
+      </div>
+    </header>
+
+    <div class="container-fluid p-4">
+      <!-- Flash Messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category if category != 'error' else 'danger' }} alert-dismissible fade show academic-card border-0 mb-4" role="alert">
+              {{ message }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <!-- Content Injection -->
+      {% block content %}{% endblock %}
+    </div>
+
   </main>
+</div>
 
-  <!-- Footer -->
-  {% include 'components/footer.html' %}
-
-  <!-- Bootstrap 5 JS -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
-  <!-- Custom JS -->
-  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
-  {% block extra_js %}{% endblock %}
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  document.getElementById('sidebarToggle').addEventListener('click', function() {
+    document.getElementById('sidebar').classList.toggle('show');
+  });
+</script>
+{% block extra_js %}{% endblock %}
 </body>
 </html>

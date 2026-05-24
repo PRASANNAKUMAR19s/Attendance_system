@@ -59,7 +59,20 @@
             </label>
             <input type="file" id="od_letter" name="od_letter" class="form-control"
                    accept=".pdf,.jpg,.jpeg,.png" required />
-            <div class="form-text">Upload the signed OD letter (PDF, JPG, or PNG)</div>
+            <div class="form-text">PDF, JPG, or PNG of the official letter</div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+                <label for="event_banner" class="form-label fw-semibold">Event Banner / Flyer</label>
+                <input type="file" id="event_banner" name="event_banner" class="form-control"
+                       accept=".jpg,.jpeg,.png" />
+            </div>
+            <div class="col-md-6">
+                <label for="payment_proof" class="form-label fw-semibold">Payment Screenshot</label>
+                <input type="file" id="payment_proof" name="payment_proof" class="form-control"
+                       accept=".jpg,.jpeg,.png" />
+            </div>
           </div>
 
           <div class="d-flex gap-2 justify-content-end mt-4">
@@ -67,9 +80,10 @@
               <i class="bi bi-x me-1"></i> Cancel
             </a>
             <button type="submit" class="btn btn-student">
-              <i class="bi bi-cloud-upload me-1"></i> Upload Letter
+              <i class="bi bi-cloud-upload me-1"></i> Submit OD Application
             </button>
           </div>
+
         </form>
       </div>
     </div>

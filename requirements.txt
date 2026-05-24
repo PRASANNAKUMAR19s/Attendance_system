@@ -37,3 +37,9 @@ SQLAlchemy==2.0.23
 
 # ─── CORS support ───────────────────────────────────────────────────────────
 flask-cors==4.0.0
+
+# Optional / Integration
+# Twilio client (optional) — enable SMS notifications via Twilio
+twilio==8.0.0
+# TensorFlow (optional, heavy) — required for deep learning backends
+# tensorflow==2.13.0

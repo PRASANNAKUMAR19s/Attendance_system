@@ -1,0 +1,66 @@
+{% extends "faculty_base.html" %}
+
+{% block title %}Add Students - Attendance System{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <div class="row mb-4">
+    <div class="col-md-8">
+      <h2 class="fw-bold"><i class="bi bi-person-plus me-2"></i>Add Students</h2>
+      <p class="text-muted">Choose single registration or bulk CSV import.</p>
+    </div>
+    <div class="col-md-4 text-end">
+      <a href="{{ url_for('faculty.all_students') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Back to Students
+      </a>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card shadow-sm h-100">
+        <div class="card-header bg-light">
+          <h5 class="mb-0">Single Student</h5>
+        </div>
+        <div class="card-body">
+          <p class="mb-3">Register a single student using the existing form.</p>
+          <a href="{{ url_for('faculty.register_student') }}" class="btn btn-primary">
+            <i class="bi bi-person-plus me-1"></i> Register Student
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card shadow-sm h-100">
+        <div class="card-header bg-light">
+          <h5 class="mb-0">Bulk Import (CSV)</h5>
+        </div>
+        <div class="card-body">
+          <p class="mb-2">Upload a CSV with columns: <code>reg_no,name,department,year,email,phone</code></p>
+          <form method="POST" enctype="multipart/form-data" action="{{ url_for('faculty.import_students_csv') }}">
+            <div class="mb-3">
+              <input type="file" class="form-control" name="students_csv" accept="text/csv">
+            </div>
+            <div class="d-flex gap-2">
+              <button class="btn btn-primary" type="submit"><i class="bi bi-upload me-1"></i> Import CSV</button>
+              <a class="btn btn-outline-secondary" href="{{ url_for('static', filename='templates/sample_students.csv') }}">Download sample CSV</a>
+            </div>
+          </form>
+
+          <hr />
+          <p class="mb-2">Or upload a ZIP containing the CSV and student image folders.</p>
+          <form method="POST" enctype="multipart/form-data" action="{{ url_for('faculty.import_students_zip') }}">
+            <div class="mb-3">
+              <input type="file" class="form-control" name="students_zip" accept=".zip,application/zip">
+            </div>
+            <div class="d-flex gap-2">
+              <button class="btn btn-secondary" type="submit"><i class="bi bi-file-zip me-1"></i> Import ZIP</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

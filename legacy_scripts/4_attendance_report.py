@@ -22,11 +22,12 @@ import glob
 from datetime import datetime
 
 # ── Config ─────────────────────────────────────────────────────────────────────
-ATTENDANCE_DIR       = "attendance"
-STUDENTS_FILE        = "students.csv"
-DEFAULTER_THRESHOLD  = 75       # Below this % = defaulter
-REPORT_IMAGE         = "attendance_report.png"
-DEFAULTERS_FILE      = "defaulters_list.csv"
+ATTENDANCE_DIR = "attendance"
+STUDENTS_FILE = "students.csv"
+DEFAULTER_THRESHOLD = 75  # Below this % = defaulter
+REPORT_IMAGE = "attendance_report.png"
+DEFAULTERS_FILE = "defaulters_list.csv"
+
 
 # ── Load all student names ────────────────────────────────────────────────────
 def load_all_students():
@@ -39,10 +40,11 @@ def load_all_students():
             students[row["RollNo"]] = row["Name"]
     return students
 
+
 # ── Load and merge all attendance CSVs ───────────────────────────────────────
 def load_all_attendance():
     pattern = os.path.join(ATTENDANCE_DIR, "attendance_*.csv")
-    files   = glob.glob(pattern)
+    files = glob.glob(pattern)
 
     if not files:
         print("[ERROR] No attendance files found in /attendance/ folder.")
@@ -64,23 +66,23 @@ def load_all_attendance():
     combined.drop_duplicates(subset=["RollNo", "Date"], inplace=True)
     return combined
 
+
 # ── Calculate stats per student ───────────────────────────────────────────────
 def calculate_stats(df, all_students):
-    total_days  = df["Date"].nunique()
+    total_days = df["Date"].nunique()
     present_per = df.groupby("RollNo")["Date"].nunique().reset_index()
     present_per.columns = ["RollNo", "DaysPresent"]
     present_per["Name"] = present_per["RollNo"].map(
         lambda r: all_students.get(str(r), "Unknown")
     )
-    present_per["TotalDays"]   = total_days
-    present_per["Percentage"]  = (
-        present_per["DaysPresent"] / total_days * 100
-    ).round(2)
+    present_per["TotalDays"] = total_days
+    present_per["Percentage"] = (present_per["DaysPresent"] / total_days * 100).round(2)
     present_per["Status"] = present_per["Percentage"].apply(
         lambda p: "⚠️ Defaulter" if p < DEFAULTER_THRESHOLD else "✅ Regular"
     )
     present_per.sort_values("Percentage", ascending=False, inplace=True)
     return present_per, total_days
+
 
 # ── Print terminal summary ────────────────────────────────────────────────────
 def print_summary(stats, total_days):
@@ -101,7 +103,7 @@ def print_summary(stats, total_days):
     print("─" * 65)
 
     defaulters = stats[stats["Percentage"] < DEFAULTER_THRESHOLD]
-    regulars   = stats[stats["Percentage"] >= DEFAULTER_THRESHOLD]
+    regulars = stats[stats["Percentage"] >= DEFAULTER_THRESHOLD]
     print(f"\n  ✅ Regular Students  : {len(regulars)}")
     print(f"  ⚠️  Defaulters        : {len(defaulters)}")
     if not defaulters.empty:
@@ -109,6 +111,7 @@ def print_summary(stats, total_days):
         for _, row in defaulters.iterrows():
             print(f"    → {row['Name']} ({row['RollNo']})  —  {row['Percentage']}%")
     print("═" * 65 + "\n")
+
 
 # ── Save defaulters CSV ───────────────────────────────────────────────────────
 def save_defaulters(stats):
@@ -119,25 +122,22 @@ def save_defaulters(stats):
     defaulters.to_csv(DEFAULTERS_FILE, index=False)
     print(f"[SAVED] Defaulters list → {DEFAULTERS_FILE}")
 
+
 # ── Generate charts ───────────────────────────────────────────────────────────
 def generate_charts(stats, total_days):
     fig, axes = plt.subplots(1, 2, figsize=(16, 7))
     fig.patch.set_facecolor("#1a1a2e")
 
-    names       = stats["Name"].tolist()
+    names = stats["Name"].tolist()
     percentages = stats["Percentage"].tolist()
 
     # ── Chart 1: Horizontal Bar Chart ────────────────────────────────────────
     ax1 = axes[0]
     ax1.set_facecolor("#16213e")
 
-    colors = [
-        "#e94560" if p < DEFAULTER_THRESHOLD else "#0f3460"
-        for p in percentages
-    ]
+    colors = ["#e94560" if p < DEFAULTER_THRESHOLD else "#0f3460" for p in percentages]
     highlight = [
-        "#ff6b9d" if p < DEFAULTER_THRESHOLD else "#4fc3f7"
-        for p in percentages
+        "#ff6b9d" if p < DEFAULTER_THRESHOLD else "#4fc3f7" for p in percentages
     ]
 
     bars = ax1.barh(names, percentages, color=highlight, edgecolor="none", height=0.6)
@@ -177,7 +177,7 @@ def generate_charts(stats, total_days):
     ax1.spines[:].set_color("#444")
     ax1.legend(facecolor="#1a1a2e", labelcolor="white", fontsize=9)
 
-    regular_patch   = mpatches.Patch(color="#4fc3f7", label="Regular (≥75%)")
+    regular_patch = mpatches.Patch(color="#4fc3f7", label="Regular (≥75%)")
     defaulter_patch = mpatches.Patch(color="#ff6b9d", label="Defaulter (<75%)")
     ax1.legend(
         handles=[regular_patch, defaulter_patch],
@@ -190,18 +190,18 @@ def generate_charts(stats, total_days):
     ax2 = axes[1]
     ax2.set_facecolor("#16213e")
 
-    n_regular   = sum(1 for p in percentages if p >= DEFAULTER_THRESHOLD)
+    n_regular = sum(1 for p in percentages if p >= DEFAULTER_THRESHOLD)
     n_defaulter = sum(1 for p in percentages if p < DEFAULTER_THRESHOLD)
-    total_s     = n_regular + n_defaulter
+    total_s = n_regular + n_defaulter
 
     if total_s > 0:
-        pie_data   = [n_regular, n_defaulter]
+        pie_data = [n_regular, n_defaulter]
         pie_labels = [
             f"Regular\n({n_regular} students)",
             f"Defaulters\n({n_defaulter} students)",
         ]
-        pie_colors  = ["#4fc3f7", "#ff6b9d"]
-        explode     = (0.05, 0.1)
+        pie_colors = ["#4fc3f7", "#ff6b9d"]
+        explode = (0.05, 0.1)
 
         wedges, texts, autotexts = ax2.pie(
             pie_data,
@@ -244,6 +244,7 @@ def generate_charts(stats, total_days):
     )
     plt.show()
     print(f"[SAVED] Chart saved → {REPORT_IMAGE}")
+
 
 # ── Main ─────────────────────────────────────────────────────────────────────
 def generate_report():

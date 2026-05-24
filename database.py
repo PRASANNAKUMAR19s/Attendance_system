@@ -38,15 +38,30 @@ CREATE TABLE IF NOT EXISTS users (
     role          TEXT    NOT NULL DEFAULT 'admin',
     full_name     TEXT    NOT NULL DEFAULT '',
     email         TEXT    NOT NULL DEFAULT '',
+    must_reset_password INTEGER NOT NULL DEFAULT 0,
     created_at    TEXT    NOT NULL DEFAULT (datetime('now')),
     is_active     INTEGER NOT NULL DEFAULT 1
 );
+
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id    INTEGER NOT NULL,
+    token_hash TEXT    NOT NULL,
+    created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
+    expires_at  TEXT    NOT NULL,
+    used_at    TEXT,
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_hash
+    ON password_reset_tokens (token_hash);
 """
 
 
 # ---------------------------------------------------------------------------
 # Connection helpers
 # ---------------------------------------------------------------------------
+
 
 def get_db() -> sqlite3.Connection:
     """Return the per-request SQLite connection (creates it if needed)."""
@@ -70,6 +85,7 @@ def close_db(exception: Optional[Exception] = None) -> None:
 # Initialisation
 # ---------------------------------------------------------------------------
 
+
 def _create_default_tutor(db: sqlite3.Connection) -> None:
     """Create the default tutor account if no users exist yet."""
     cursor = db.execute("SELECT COUNT(*) FROM users")
@@ -85,11 +101,22 @@ def _create_default_tutor(db: sqlite3.Connection) -> None:
         stored_hash = bcrypt.hashpw(plain.encode(), bcrypt.gensalt()).decode()
 
     db.execute(
-        "INSERT INTO users (username, password_hash, role, full_name) VALUES (?, ?, ?, ?)",
+        "INSERT INTO users (username, password_hash, role, full_name, must_reset_password) "
+        "VALUES (?, ?, ?, ?, 0)",
         (username, stored_hash, "tutor", "Administrator"),
     )
     db.commit()
     logger.info("Created default tutor user: %s with role: tutor", username)
+
+
+def _ensure_user_columns(db: sqlite3.Connection) -> None:
+    """Add new columns to legacy users tables when needed."""
+    columns = {row[1] for row in db.execute("PRAGMA table_info(users)").fetchall()}
+    if "must_reset_password" not in columns:
+        db.execute(
+            "ALTER TABLE users ADD COLUMN must_reset_password INTEGER NOT NULL DEFAULT 0"
+        )
+        db.commit()
 
 
 def init_db(app: Flask) -> None:
@@ -102,6 +129,7 @@ def init_db(app: Flask) -> None:
         try:
             db.executescript(_SCHEMA)
             db.commit()
+            _ensure_user_columns(db)
             _create_default_tutor(db)
         finally:
             db.close()

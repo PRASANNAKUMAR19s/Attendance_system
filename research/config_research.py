@@ -34,12 +34,12 @@ EVALUATION_SPLIT = 0.8  # 80/20 train-test split
 
 # Robustness testing parameters
 TEST_CONDITIONS = {
-    'normal': {'brightness': 1.0, 'rotation': 0},
-    'low_light': {'brightness': 0.5, 'rotation': 0},
-    'bright': {'brightness': 1.5, 'rotation': 0},
-    'rotated_15': {'brightness': 1.0, 'rotation': 15},
-    'rotated_30': {'brightness': 1.0, 'rotation': 30},
-    'low_light_rotated': {'brightness': 0.5, 'rotation': 15},
+    "normal": {"brightness": 1.0, "rotation": 0},
+    "low_light": {"brightness": 0.5, "rotation": 0},
+    "bright": {"brightness": 1.5, "rotation": 0},
+    "rotated_15": {"brightness": 1.0, "rotation": 15},
+    "rotated_30": {"brightness": 1.0, "rotation": 30},
+    "low_light_rotated": {"brightness": 0.5, "rotation": 15},
 }
 
 # Dataset generator parameters
@@ -47,8 +47,8 @@ SYNTHETIC_SAMPLES_PER_CONDITION = 5
 IMAGE_SIZE = (100, 100)
 
 # Model comparison parameters
-MODELS_TO_COMPARE = ['LBPH', 'EigenFaces', 'SimpleCNN']
+MODELS_TO_COMPARE = ["LBPH", "EigenFaces", "SimpleCNN"]
 
 # Output formats
-OUTPUT_FORMAT = 'png'
+OUTPUT_FORMAT = "png"
 DPI = 300  # For publication-quality graphs

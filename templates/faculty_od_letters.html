@@ -1,13 +1,13 @@
 {% extends "faculty_base.html" %}
-{% block title %}OD Letters — Faculty Portal{% endblock %}
+{% block title %}Requests Portal — Faculty Portal{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
   <div>
     <h2 class="fw-bold mb-0">
-      <i class="bi bi-envelope-paper me-2 text-faculty"></i>OD Letters
+      <i class="bi bi-envelope-paper me-2 text-primary"></i>Requests Portal
     </h2>
-    <p class="text-muted mb-0">Review and approve On-Duty leave requests</p>
+    <p class="text-muted mb-0">Review and approve On-Duty and Leave requests</p>
   </div>
   <a href="{{ url_for('faculty.dashboard') }}" class="btn btn-outline-secondary">
     <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
@@ -15,81 +15,82 @@
 </div>
 
 <!-- Status filter tabs -->
-<ul class="nav nav-tabs mb-3" id="odTabs" role="tablist">
+<ul class="nav nav-pills gap-2 mb-4" id="odTabs" role="tablist">
   <li class="nav-item" role="presentation">
-    <button class="nav-link active" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending"
+    <button class="nav-link active rounded-pill px-4" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending"
             type="button" role="tab">
-      <i class="bi bi-clock-history me-1"></i> Pending
-      <span class="badge bg-warning text-dark ms-1">{{ pending_count or 0 }}</span>
+      <i class="bi bi-clock-history me-2"></i>Pending
+      <span class="badge bg-white text-primary ms-2">{{ pending_count or 0 }}</span>
     </button>
   </li>
   <li class="nav-item" role="presentation">
-    <button class="nav-link" id="approved-tab" data-bs-toggle="tab" data-bs-target="#approved"
+    <button class="nav-link rounded-pill px-4" id="approved-tab" data-bs-toggle="tab" data-bs-target="#approved"
             type="button" role="tab">
       <i class="bi bi-check-circle me-1"></i> Approved
     </button>
   </li>
   <li class="nav-item" role="presentation">
-    <button class="nav-link" id="rejected-tab" data-bs-toggle="tab" data-bs-target="#rejected"
+    <button class="nav-link rounded-pill px-4" id="rejected-tab" data-bs-toggle="tab" data-bs-target="#rejected"
             type="button" role="tab">
       <i class="bi bi-x-circle me-1"></i> Rejected
     </button>
   </li>
 </ul>
 
+
 <div class="tab-content" id="odTabContent">
-  <!-- Pending OD Letters -->
+  <!-- Pending Requests -->
   <div class="tab-pane fade show active" id="pending" role="tabpanel">
-    <div class="card border-0 shadow-sm">
+    <div class="academic-card">
+
       <div class="table-responsive">
         <table class="table table-hover align-middle mb-0">
           <thead class="table-light">
             <tr>
-              <th>#</th>
+              <th>Type</th>
               <th>Reg. No.</th>
-              <th>Student Name</th>
-              <th>OD Date</th>
+              <th>Date</th>
               <th>Reason</th>
-              <th>Submitted</th>
+              <th>AI Sign Check</th>
               <th>Document</th>
-              <th>Action</th>
+              <th class="text-end">Action</th>
             </tr>
           </thead>
           <tbody>
-            {% for letter in pending_letters %}
+            {% for req in pending_letters %}
             <tr>
-              <td class="text-muted small">{{ loop.index }}</td>
-              <td><code class="text-primary">{{ letter.reg_no }}</code></td>
-              <td class="fw-semibold">{{ letter.student_name or '—' }}</td>
-              <td>{{ letter.od_date or '—' }}</td>
-              <td class="text-muted small">{{ letter.reason or '—' }}</td>
-              <td class="text-muted small">{{ letter.submitted_at or '—' }}</td>
               <td>
-                {% if letter.file_path %}
-                <a href="{{ letter.file_path }}" class="btn btn-sm btn-outline-primary" target="_blank">
-                  <i class="bi bi-file-earmark me-1"></i> View
-                </a>
+                <span class="badge {% if req.type == 'OD' %}bg-primary{% else %}bg-info{% endif %}">
+                  {{ req.type }}
+                </span>
+              </td>
+              <td><code class="text-dark fw-bold">{{ req.reg_no }}</code></td>
+              <td>{{ req.date }}</td>
+              <td class="text-muted small">{{ req.reason }}</td>
+              <td>
+                {% if req.sign_status == 'VERIFIED' %}
+                  <span class="text-success small"><i class="bi bi-check-circle-fill me-1"></i>Detected</span>
                 {% else %}
-                <span class="text-muted">No file</span>
+                  <span class="text-danger small fw-bold"><i class="bi bi-exclamation-triangle-fill me-1"></i>Missing</span>
                 {% endif %}
               </td>
               <td>
-                <form method="POST" action="{{ url_for('faculty.od_action', letter_id=letter.id) }}"
-                      class="d-inline-flex gap-1">
-                  <button name="action" value="approve" class="btn btn-sm btn-success">
-                    <i class="bi bi-check2"></i> Approve
-                  </button>
-                  <button name="action" value="reject" class="btn btn-sm btn-danger">
-                    <i class="bi bi-x"></i> Reject
-                  </button>
+                <a href="{{ url_for('static', filename='uploads/' + req.file) }}" class="btn btn-sm btn-outline-secondary" target="_blank">
+                  <i class="bi bi-file-earmark-text"></i>
+                </a>
+              </td>
+              <td class="text-end">
+                <form method="POST" action="{{ url_for('faculty.request_action', req_type=req.type, reg_no=req.reg_no, date_str=req.date) }}" class="d-inline">
+                  <button name="action" value="approve" class="btn btn-sm btn-success">Approve</button>
+                  <button name="action" value="reject" class="btn btn-sm btn-outline-danger">Reject</button>
                 </form>
               </td>
             </tr>
             {% else %}
             <tr>
-              <td colspan="8" class="text-center text-muted py-4">
+              <td colspan="7" class="text-center text-muted py-5">
                 <i class="bi bi-inbox fs-2 d-block mb-2"></i>
-                No pending OD letters.
+                No pending requests.
               </td>
             </tr>
             {% endfor %}
@@ -99,44 +100,35 @@
     </div>
   </div>
 
-  <!-- Approved OD Letters -->
+  <!-- Approved Requests -->
   <div class="tab-pane fade" id="approved" role="tabpanel">
-    <div class="card border-0 shadow-sm">
+    <div class="academic-card">
+
       <div class="table-responsive">
         <table class="table table-hover align-middle mb-0">
           <thead class="table-light">
             <tr>
-              <th>#</th>
+              <th>Type</th>
               <th>Reg. No.</th>
-              <th>Student Name</th>
-              <th>OD Date</th>
+              <th>Date</th>
               <th>Reason</th>
-              <th>Approved On</th>
               <th>Document</th>
             </tr>
           </thead>
           <tbody>
-            {% for letter in approved_letters %}
+            {% for req in approved_letters %}
             <tr>
-              <td class="text-muted small">{{ loop.index }}</td>
-              <td><code class="text-success">{{ letter.reg_no }}</code></td>
-              <td class="fw-semibold">{{ letter.student_name or '—' }}</td>
-              <td>{{ letter.od_date or '—' }}</td>
-              <td class="text-muted small">{{ letter.reason or '—' }}</td>
-              <td class="text-muted small">{{ letter.reviewed_at or '—' }}</td>
+              <td><span class="badge bg-secondary">{{ req.type }}</span></td>
+              <td><code>{{ req.reg_no }}</code></td>
+              <td>{{ req.date }}</td>
+              <td class="small">{{ req.reason }}</td>
               <td>
-                {% if letter.file_path %}
-                <a href="{{ letter.file_path }}" class="btn btn-sm btn-outline-success" target="_blank">
-                  <i class="bi bi-file-earmark me-1"></i> View
-                </a>
-                {% else %}
-                <span class="text-muted">No file</span>
-                {% endif %}
+                <a href="{{ url_for('static', filename='uploads/' + req.file) }}" target="_blank" class="small">View Letter</a>
               </td>
             </tr>
             {% else %}
             <tr>
-              <td colspan="7" class="text-center text-muted py-4">No approved OD letters.</td>
+              <td colspan="5" class="text-center text-muted py-4">No approved items.</td>
             </tr>
             {% endfor %}
           </tbody>
@@ -145,44 +137,31 @@
     </div>
   </div>
 
-  <!-- Rejected OD Letters -->
+  <!-- Rejected Requests -->
   <div class="tab-pane fade" id="rejected" role="tabpanel">
-    <div class="card border-0 shadow-sm">
+    <div class="academic-card">
+
       <div class="table-responsive">
         <table class="table table-hover align-middle mb-0">
           <thead class="table-light">
             <tr>
-              <th>#</th>
+              <th>Type</th>
               <th>Reg. No.</th>
-              <th>Student Name</th>
-              <th>OD Date</th>
-              <th>Reason</th>
-              <th>Rejected On</th>
-              <th>Document</th>
+              <th>Date</th>
+              <th>Status</th>
             </tr>
           </thead>
           <tbody>
-            {% for letter in rejected_letters %}
+            {% for req in rejected_letters %}
             <tr>
-              <td class="text-muted small">{{ loop.index }}</td>
-              <td><code class="text-danger">{{ letter.reg_no }}</code></td>
-              <td class="fw-semibold">{{ letter.student_name or '—' }}</td>
-              <td>{{ letter.od_date or '—' }}</td>
-              <td class="text-muted small">{{ letter.reason or '—' }}</td>
-              <td class="text-muted small">{{ letter.reviewed_at or '—' }}</td>
-              <td>
-                {% if letter.file_path %}
-                <a href="{{ letter.file_path }}" class="btn btn-sm btn-outline-danger" target="_blank">
-                  <i class="bi bi-file-earmark me-1"></i> View
-                </a>
-                {% else %}
-                <span class="text-muted">No file</span>
-                {% endif %}
-              </td>
+              <td>{{ req.type }}</td>
+              <td>{{ req.reg_no }}</td>
+              <td>{{ req.date }}</td>
+              <td><span class="text-danger">Rejected</span></td>
             </tr>
             {% else %}
             <tr>
-              <td colspan="7" class="text-center text-muted py-4">No rejected OD letters.</td>
+              <td colspan="4" class="text-center text-muted py-4">No rejected items.</td>
             </tr>
             {% endfor %}
           </tbody>
@@ -192,3 +171,4 @@
   </div>
 </div>
 {% endblock %}
+

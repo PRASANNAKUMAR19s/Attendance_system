@@ -1,137 +1,208 @@
 {% extends "student_base.html" %}
-{% block title %}Student Dashboard — AI Attendance System{% endblock %}
+{% block title %}Student Dashboard — EduSync Attendance{% endblock %}
 
 {% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h3 class="fw-bold text-dark mb-1" style="font-family: var(--font-display);">My Dashboard</h3>
+    <p class="text-muted mb-0">Monitor your attendance performance</p>
+  </div>
+</div>
+
 {% if attendance_pct is not none and attendance_pct < 75 %}
-<div class="alert alert-danger alert-dismissible fade show" role="alert">
-  <i class="bi bi-exclamation-triangle-fill me-2"></i>
-  <strong>Low Attendance Warning!</strong> Your attendance ({{ attendance_pct }}%) is below the required 75% threshold.
-  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+<div class="alert alert-danger d-flex align-items-center gap-3 academic-card border-0 mb-4 p-3" role="alert" style="background: rgba(244, 63, 94, 0.1); border: 1px solid rgba(244, 63, 94, 0.2);">
+  <div class="bg-white rounded-circle d-flex align-items-center justify-content-center text-danger flex-shrink-0" style="width: 40px; height: 40px; box-shadow: 0 4px 12px rgba(244, 63, 94, 0.2);">
+    <i class="bi bi-exclamation-octagon-fill fs-5"></i>
+  </div>
+  <div>
+    <h6 class="mb-1 fw-bold" style="color: #be123c;">Low Attendance Warning</h6>
+    <p class="mb-0 small" style="color: #9f1239;">Your attendance ({{ attendance_pct }}%) is below the required 75% threshold. Please consult your academic advisor immediately.</p>
+  </div>
 </div>
 {% endif %}
 
-<div class="row g-3 mb-4">
+{% if pending_queries %}
+<div class="card border-0 shadow-sm mb-4" style="border-left: 4px solid #f59e0b;">
+    <div class="card-header bg-white py-3 fw-bold">
+        <i class="bi bi-patch-question me-2 text-warning"></i> Action Required: Pending Reasons
+    </div>
+    <div class="card-body">
+        <p class="text-muted small">The Faculty has requested a reason for your absence on the following periods:</p>
+        <div class="list-group list-group-flush">
+            {% for query in pending_queries %}
+            <div class="list-group-item px-0 py-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="fw-bold">{{ query.date }} — {{ query.period }}</span>
+                    <span class="badge bg-warning text-dark">Reason Pending</span>
+                </div>
+                <form action="{{ url_for('student_portal.submit_reason') }}" method="POST">
+                    <input type="hidden" name="date" value="{{ query.date }}">
+                    <input type="hidden" name="period" value="{{ query.period }}">
+                    <div class="input-group">
+                        <textarea name="reason" class="form-control form-control-sm" placeholder="Type your reason here..." required rows="1"></textarea>
+                        <button type="submit" class="btn btn-sm btn-warning fw-bold">Submit</button>
+                    </div>
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+
+<!-- Stats Cards -->
+<div class="row g-4 mb-4">
   <div class="col-6 col-lg-3">
-    <div class="card border-0 shadow-sm h-100 {% if attendance_pct < 75 %}border-danger border-3{% endif %}" 
-         style="{% if attendance_pct >= 75 %}background: linear-gradient(135deg, #28a745, #20c997);{% else %}background: linear-gradient(135deg, #dc3545, #c82333);{% endif %}">
-      <div class="card-body d-flex align-items-center gap-2 text-white py-3">
-        <i class="bi bi-pie-chart-fill fs-2 opacity-75"></i>
+    <div class="academic-card p-4 h-100">
+      <div class="d-flex justify-content-between align-items-start mt-2">
         <div>
-          <div class="fs-3 fw-bold">{{ attendance_pct if attendance_pct is not none else '—' }}%</div>
-          <div class="small opacity-75">Attendance</div>
+          <div class="stat-label mb-2">Attendance</div>
+          <div class="stat-value {% if attendance_pct is not none and attendance_pct < 75 %}text-danger{% else %}text-dark{% endif %}">
+            {{ attendance_pct if attendance_pct is not none else '—' }}%
+          </div>
+        </div>
+        <div class="icon-shape" style="background: rgba(59, 130, 246, 0.15); color: var(--primary-blue);">
+          <i class="bi bi-pie-chart-fill"></i>
+        </div>
+      </div>
+      <div class="progress mt-4" style="height: 6px; background: rgba(0,0,0,0.05); border-radius: 10px;">
+        <div class="progress-bar" role="progressbar" style="width: {{ attendance_pct or 0 }}%; background: {% if attendance_pct is not none and attendance_pct >= 75 %}var(--primary-gradient){% else %}var(--danger){% endif %}; border-radius: 10px;"></div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-6 col-lg-3">
+    <div class="academic-card p-4 h-100">
+      <div class="d-flex justify-content-between align-items-start mt-2">
+        <div>
+          <div class="stat-label mb-2">Total Classes</div>
+          <div class="stat-value text-dark">{{ total_classes or 0 }}</div>
+        </div>
+        <div class="icon-shape" style="background: rgba(100, 116, 139, 0.15); color: #475569;">
+          <i class="bi bi-calendar3"></i>
         </div>
       </div>
     </div>
   </div>
+
   <div class="col-6 col-lg-3">
-    <div class="card border-0 shadow-sm bg-primary text-white h-100">
-      <div class="card-body d-flex align-items-center gap-2 py-3">
-        <i class="bi bi-calendar3 fs-2 opacity-75"></i>
+    <div class="academic-card p-4 h-100">
+      <div class="d-flex justify-content-between align-items-start mt-2">
         <div>
-          <div class="fs-3 fw-bold">{{ total_classes or 0 }}</div>
-          <div class="small opacity-75">Total Classes</div>
+          <div class="stat-label mb-2">Classes Present</div>
+          <div class="stat-value text-dark">{{ present_count or 0 }}</div>
+        </div>
+        <div class="icon-shape" style="background: rgba(16, 185, 129, 0.15); color: var(--success);">
+          <i class="bi bi-check2-circle"></i>
         </div>
       </div>
     </div>
   </div>
+
   <div class="col-6 col-lg-3">
-    <div class="card border-0 shadow-sm bg-success text-white h-100">
-      <div class="card-body d-flex align-items-center gap-2 py-3">
-        <i class="bi bi-check2-circle fs-2 opacity-75"></i>
+    <div class="academic-card p-4 h-100">
+      <div class="d-flex justify-content-between align-items-start mt-2">
         <div>
-          <div class="fs-3 fw-bold">{{ present_count or 0 }}</div>
-          <div class="small opacity-75">Present</div>
+          <div class="stat-label mb-2">Classes Absent</div>
+          <div class="stat-value text-dark">{{ absent_count or 0 }}</div>
         </div>
-      </div>
-    </div>
-  </div>
-  <div class="col-6 col-lg-3">
-    <div class="card border-0 shadow-sm bg-danger text-white h-100">
-      <div class="card-body d-flex align-items-center gap-2 py-3">
-        <i class="bi bi-x-circle fs-2 opacity-75"></i>
-        <div>
-          <div class="fs-3 fw-bold">{{ absent_count or 0 }}</div>
-          <div class="small opacity-75">Absent</div>
+        <div class="icon-shape" style="background: rgba(244, 63, 94, 0.15); color: var(--danger);">
+          <i class="bi bi-x-circle"></i>
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<div class="row g-3">
+<div class="row g-4">
+  <!-- Profile Summary -->
   <div class="col-md-4">
-    <div class="card border-0 shadow-sm h-100">
-      <div class="card-header bg-white py-2 fw-semibold">
-        <i class="bi bi-person-badge me-1 text-success"></i> My Info
+    <div class="academic-card h-100">
+      <div class="card-header border-0">
+        <h6 class="mb-0 fw-bold"><i class="bi bi-person-badge me-2 text-primary"></i>Profile Details</h6>
       </div>
-      <div class="card-body py-3">
-        <table class="table table-sm mb-0">
-          <tr>
-            <td class="text-muted border-0">Reg. No</td>
-            <td class="fw-bold text-primary border-0">{{ reg_no }}</td>
-          </tr>
-          <tr>
-            <td class="text-muted border-0">Name</td>
-            <td class="border-0">{{ user.full_name or '—' }}</td>
-          </tr>
-          <tr>
-            <td class="text-muted border-0">On Duty</td>
-            <td class="border-0"><span class="badge bg-info">{{ od_count or 0 }}</span></td>
-          </tr>
-        </table>
+      <div class="card-body p-4 pt-3">
+        <div class="d-flex align-items-center mb-4 p-3 rounded-4" style="background: rgba(255,255,255,0.4); border: 1px solid rgba(255,255,255,0.6);">
+          <div class="rounded-circle d-flex align-items-center justify-content-center me-3 text-primary fw-bold shadow-sm" style="width: 60px; height: 60px; background: white; font-size: 1.5rem; border: 2px solid var(--primary-light);">
+            {{ user.full_name[0] if user.full_name else 'S' }}
+          </div>
+          <div>
+            <h6 class="mb-0 fw-bold text-dark" style="font-family: var(--font-display);">{{ user.full_name or '—' }}</h6>
+            <div class="text-muted small mt-1 opacity-75">{{ reg_no }}</div>
+          </div>
+        </div>
+        
+        <ul class="list-group list-group-flush bg-transparent">
+          <li class="list-group-item px-0 d-flex justify-content-between align-items-center border-light bg-transparent py-3">
+            <span class="text-muted small"><i class="bi bi-diagram-3 me-2 opacity-75"></i>Department</span>
+            <span class="fw-bold text-dark">{{ user.department or 'General' }}</span>
+          </li>
+          <li class="list-group-item px-0 d-flex justify-content-between align-items-center border-light bg-transparent py-3">
+            <span class="text-muted small"><i class="bi bi-shield-check me-2 opacity-75"></i>Status</span>
+            <span class="badge badge-pill badge-success-soft">Active Enrollment</span>
+          </li>
+          <li class="list-group-item px-0 d-flex justify-content-between align-items-center border-light bg-transparent py-3 border-0">
+            <span class="text-muted small"><i class="bi bi-envelope-paper me-2 opacity-75"></i>Approved ODs</span>
+            <span class="fw-bold text-primary fs-5">{{ od_count or 0 }}</span>
+          </li>
+        </ul>
       </div>
     </div>
   </div>
 
+  <!-- Recent Attendance -->
   <div class="col-md-8">
-    <div class="card border-0 shadow-sm h-100">
-      <div class="card-header bg-white py-2 fw-semibold d-flex justify-content-between align-items-center">
-        <span><i class="bi bi-clock-history me-1 text-success"></i> Recent Attendance</span>
+    <div class="academic-card h-100">
+      <div class="card-header border-0 d-flex justify-content-between align-items-center">
+        <h6 class="mb-0 fw-bold"><i class="bi bi-clock-history me-2 text-primary"></i>Recent Activity</h6>
         <div>
-          <a href="{{ url_for('student_portal.attendance_pdf') }}" class="btn btn-sm btn-danger me-1">
-            <i class="bi bi-file-earmark-pdf"></i> PDF
+          <a href="{{ url_for('student_portal.attendance_pdf') }}" class="btn btn-sm" style="background: rgba(244, 63, 94, 0.1); color: var(--danger); border: 1px solid rgba(244, 63, 94, 0.2);">
+            <i class="bi bi-file-earmark-pdf me-1"></i> Export
           </a>
-          <a href="{{ url_for('student_portal.attendance') }}" class="btn btn-sm btn-outline-success">
-            View All <i class="bi bi-arrow-right ms-1"></i>
+          <a href="{{ url_for('student_portal.attendance') }}" class="btn btn-sm ms-2" style="background: rgba(255,255,255,0.5); color: var(--text-dark); border: 1px solid rgba(255,255,255,0.8);">
+            View All
           </a>
         </div>
       </div>
-      <div class="card-body p-0">
+      
+      <div class="table-responsive">
         {% if recent_records %}
-        <div class="table-responsive">
-          <table class="table table-hover table-sm mb-0">
-            <thead class="table-light">
-              <tr>
-                <th>Date</th>
-                <th>Period</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for record in recent_records %}
-              <tr>
-                <td>{{ record.date }}</td>
-                <td>{{ record.period }}</td>
-                <td>
-                  {% if record.status|upper in ['PRESENT', 'LATE', 'ON_TIME'] %}
-                    <span class="badge bg-success">Present</span>
-                  {% elif record.status == 'Absent' %}
-                    <span class="badge bg-danger">Absent</span>
-                  {% elif record.status == 'OD' %}
-                    <span class="badge bg-info">On Duty</span>
-                  {% else %}
-                    <span class="badge bg-secondary">{{ record.status }}</span>
-                  {% endif %}
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
+        <table class="table mb-0">
+          <thead>
+            <tr>
+              <th class="ps-4">Date</th>
+              <th>Period</th>
+              <th class="text-end pe-4">Verification</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for record in recent_records %}
+            <tr style="transition: var(--transition-smooth);" onmouseover="this.style.background='rgba(255,255,255,0.4)'" onmouseout="this.style.background='transparent'">
+              <td class="ps-4 text-dark fw-bold">{{ record.date }}</td>
+              <td><span class="px-2 py-1 rounded text-muted text-uppercase fw-semibold" style="font-size: 0.75rem; background: rgba(0,0,0,0.04); letter-spacing: 0.05em;">{{ record.period }}</span></td>
+              <td class="text-end pe-4">
+                {% if record.status|upper in ['PRESENT', 'LATE', 'ON_TIME'] %}
+                  <span class="badge badge-pill badge-success-soft">Verified</span>
+                {% elif record.status == 'Absent' %}
+                  <span class="badge badge-pill badge-danger-soft">Absent</span>
+                {% elif record.status == 'OD' %}
+                  <span class="badge badge-pill badge-info-soft">On Duty</span>
+                {% else %}
+                  <span class="badge bg-secondary badge-pill">{{ record.status }}</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
         {% else %}
-        <div class="text-center py-4 text-muted">
-          <i class="bi bi-inbox" style="font-size: 2rem;"></i>
-          <p class="mt-2 mb-0">No attendance records yet</p>
+        <div class="text-center py-5">
+          <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px; background: rgba(0,0,0,0.03);">
+            <i class="bi bi-inbox text-muted" style="font-size: 2.5rem; opacity: 0.5;"></i>
+          </div>
+          <h5 class="fw-bold text-dark mb-2" style="font-family: var(--font-display);">No Records Found</h5>
+          <p class="text-muted small mb-0">Your attendance scans will appear here.</p>
         </div>
         {% endif %}
       </div>

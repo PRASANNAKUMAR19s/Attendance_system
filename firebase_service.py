@@ -48,6 +48,7 @@ def _safe_date(date: Optional[str]) -> Optional[str]:
     parsed = datetime.strptime(date, "%Y-%m-%d")
     return parsed.strftime("%Y-%m-%d")
 
+
 # ---------------------------------------------------------------------------
 # Helper: initialise Firebase Admin SDK once
 # ---------------------------------------------------------------------------
@@ -55,41 +56,48 @@ _firebase_app = None
 
 
 def _init_firebase() -> bool:
-    """Initialise the Firebase Admin SDK.  Returns True on success."""
+    """Initialise the Firebase Admin SDK. Returns True on success."""
     global _firebase_app
     if _firebase_app is not None:
         return True
     try:
-        import firebase_admin  # type: ignore
-        from firebase_admin import credentials  # type: ignore
+        import firebase_admin
+        from firebase_admin import credentials
 
-        creds_path = _config.FIREBASE_CREDENTIALS_PATH
-        if not os.path.isfile(creds_path):
-            logger.warning(
-                "Firebase credentials file '%s' not found.  "
-                "Falling back to CSV storage.",
-                creds_path,
-            )
+        # Option A: Build credentials from environment variables (Render)
+        if (
+            _config.FIREBASE_PROJECT_ID
+            and _config.FIREBASE_PRIVATE_KEY
+            and _config.FIREBASE_CLIENT_EMAIL
+        ):
+            cred_dict = {
+                "type": "service_account",
+                "project_id": _config.FIREBASE_PROJECT_ID,
+                "private_key": _config.FIREBASE_PRIVATE_KEY,
+                "client_email": _config.FIREBASE_CLIENT_EMAIL,
+                "token_uri": "https://oauth2.googleapis.com/token",
+            }
+            cred = credentials.Certificate(cred_dict)
+            logger.info("Firebase: using environment variable credentials.")
+
+        # Option B: Load from serviceAccountKey.json file (local dev)
+        elif os.path.isfile(_config.FIREBASE_CREDENTIALS_PATH):
+            cred = credentials.Certificate(_config.FIREBASE_CREDENTIALS_PATH)
+            logger.info("Firebase: using credentials file.")
+
+        else:
+            logger.warning("No Firebase credentials found. Falling back to CSV.")
             return False
 
-        cred = credentials.Certificate(creds_path)
-        if not os.path.isfile(_config.FIREBASE_CREDENTIALS_PATH):
-            logger.warning(
-                "Firebase credentials file '%s' not found.  "
-                "Falling back to CSV storage.",
-                _config.FIREBASE_CREDENTIALS_PATH,
-            )
-            return False
-
-        cred = credentials.Certificate(_config.FIREBASE_CREDENTIALS_PATH)
-        kwargs: Dict[str, Any] = {}
+        kwargs = {}
         if _config.FIREBASE_STORAGE_BUCKET:
             kwargs["storageBucket"] = _config.FIREBASE_STORAGE_BUCKET
 
         _firebase_app = firebase_admin.initialize_app(cred, kwargs)
         logger.info("Firebase Admin SDK initialised successfully.")
         return True
-    except Exception as exc:  # pragma: no cover
+
+    except Exception as exc:
         logger.error("Firebase initialisation failed: %s", exc)
         return False
 
@@ -107,6 +115,7 @@ class FirebaseService:
         self.use_firebase: bool = _config.USE_FIREBASE and _init_firebase()
         if self.use_firebase:
             from firebase_admin import firestore, storage  # type: ignore
+
             self._db = firestore.client()
             self._bucket = storage.bucket() if _config.FIREBASE_STORAGE_BUCKET else None
             logger.info("FirebaseService: Firestore backend active.")
@@ -225,7 +234,9 @@ class FirebaseService:
         records = self.get_attendance(reg_no=reg_no)
         total = len(records)
         present = sum(
-            1 for r in records if r.get("status", "").upper() in ("ON_TIME", "LATE", "PRESENT")
+            1
+            for r in records
+            if r.get("status", "").upper() in ("ON_TIME", "LATE", "PRESENT")
         )
         pct = round(present / total * 100, 2) if total else 0.0
         return {
@@ -280,9 +291,7 @@ class FirebaseService:
     #  Firebase Storage helpers                                            #
     # ------------------------------------------------------------------ #
 
-    def upload_face_image(
-        self, reg_no: str, image_path: str
-    ) -> Optional[str]:
+    def upload_face_image(self, reg_no: str, image_path: str) -> Optional[str]:
         """
         Upload a face image to Firebase Storage.
         Returns the public URL or None on failure.
@@ -360,25 +369,35 @@ class FirebaseService:
                 )
         return students
 
-    def _csv_add_student(self, reg_no: str, name: str, department: str = "", year: int = 1, email: str = "", phone: str = "") -> None:
+    def _csv_add_student(
+        self,
+        reg_no: str,
+        name: str,
+        department: str = "",
+        year: int = 1,
+        email: str = "",
+        phone: str = "",
+    ) -> None:
         students_file = _config.STUDENTS_FILE
         file_exists = os.path.isfile(students_file)
         with open(students_file, "a", newline="", encoding="utf-8") as f:
-            writer = csv.DictWriter(f, fieldnames=["RegNo", "Name", "Department", "Year", "Email", "Phone"])
+            writer = csv.DictWriter(
+                f, fieldnames=["RegNo", "Name", "Department", "Year", "Email", "Phone"]
+            )
             if not file_exists:
                 writer.writeheader()
-            writer.writerow({
-                "RegNo": reg_no,
-                "Name": name,
-                "Department": department,
-                "Year": year,
-                "Email": email,
-                "Phone": phone
-            })
+            writer.writerow(
+                {
+                    "RegNo": reg_no,
+                    "Name": name,
+                    "Department": department,
+                    "Year": year,
+                    "Email": email,
+                    "Phone": phone,
+                }
+            )
 
-    def _csv_update_student(
-        self, reg_no: str, data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _csv_update_student(self, reg_no: str, data: Dict[str, Any]) -> Dict[str, Any]:
         updated: Dict[str, Any] = {}
         rows: List[Dict[str, str]] = []
         students_file = _config.STUDENTS_FILE
@@ -440,10 +459,10 @@ class FirebaseService:
         path = os.path.realpath(os.path.join(attendance_dir, f"attendance_{safe}.csv"))
         if not path.startswith(attendance_dir + os.sep) and path != attendance_dir:
             raise ValueError("Unsafe attendance file path detected.")
-        
+
         fieldnames = ["RegNo", "Name", "Date", "Period", "MarkedTime", "Status"]
         existing_records = []
-        
+
         if os.path.isfile(path):
             with open(path, newline="", encoding="utf-8") as f:
                 reader = csv.DictReader(f)
@@ -451,12 +470,21 @@ class FirebaseService:
                     if row.get("RegNo") == reg_no and row.get("Period") == period:
                         continue
                     existing_records.append(row)
-        
+
         with open(path, "w", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=fieldnames)
             writer.writeheader()
             writer.writerows(existing_records)
-            writer.writerow({"RegNo": reg_no, "Name": name, "Date": date, "Period": period, "MarkedTime": marked_time, "Status": status})
+            writer.writerow(
+                {
+                    "RegNo": reg_no,
+                    "Name": name,
+                    "Date": date,
+                    "Period": period,
+                    "MarkedTime": marked_time,
+                    "Status": status,
+                }
+            )
 
     def _csv_delete_attendance(self, reg_no: str, date: str, period: str) -> bool:
         """Delete a specific attendance record from CSV."""
@@ -467,7 +495,7 @@ class FirebaseService:
             return False
         if not os.path.isfile(path):
             return False
-        
+
         rows = []
         found = False
         fieldnames = ["RegNo", "Name", "Date", "Period", "MarkedTime", "Status"]
@@ -478,13 +506,13 @@ class FirebaseService:
                     found = True
                 else:
                     rows.append(row)
-        
+
         if found:
             with open(path, "w", newline="", encoding="utf-8") as f:
                 writer = csv.DictWriter(f, fieldnames=fieldnames)
                 writer.writeheader()
                 writer.writerows(rows)
-        
+
         return found
 
     def _csv_get_attendance(
@@ -501,7 +529,7 @@ class FirebaseService:
         )
         records: List[Dict[str, Any]] = []
         name_to_student = self._get_name_to_regno_map()
-        
+
         for path in sorted(glob.glob(pattern)):
             real_path = os.path.realpath(path)
             if not real_path.startswith(attendance_dir + os.sep):
@@ -512,9 +540,9 @@ class FirebaseService:
                 for row in csv.DictReader(f):
                     raw_reg_no = row.get("RegNo", row.get("reg_no", ""))
                     student_name = row.get("Name", row.get("name", ""))
-                    
+
                     mapped_reg_no = name_to_student.get(student_name, raw_reg_no)
-                    
+
                     r = {
                         "reg_no": mapped_reg_no,
                         "name": student_name,

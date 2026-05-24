@@ -119,7 +119,7 @@
 
 {% block extra_js %}
 <script>
-const UPDATE_URL = "{{ url_for('faculty.update_attendance_status') }}";
+const UPDATE_URL = "{{ url_for('faculty.mark_attendance') }}";
 let updateModal;
 
 document.addEventListener('DOMContentLoaded', function() {

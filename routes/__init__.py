@@ -1,4 +1,5 @@
 """routes package — Flask Blueprints for the web application."""
+
 from .auth import auth_bp
 from .faculty import faculty_bp
 from .student_portal import student_portal_bp

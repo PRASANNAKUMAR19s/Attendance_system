@@ -1,0 +1,100 @@
+{% extends "student_base.html" %}
+{% block title %}Upload Leave Letter — Student Portal{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="fw-bold mb-0">
+      <i class="bi bi-envelope-paper me-2 text-info"></i>Upload Leave Letter
+    </h2>
+    <p class="text-muted mb-0">Upload your signed Leave / Permission letter</p>
+  </div>
+  <a href="{{ url_for('student_portal.dashboard') }}" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left me-1"></i> Back
+  </a>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white py-3 fw-semibold">
+        <i class="bi bi-file-earmark-text me-1 text-info"></i> Upload Signed Permission Letter
+      </div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('student_portal.leave_upload') }}"
+              enctype="multipart/form-data">
+
+          <div class="alert alert-info d-flex align-items-start gap-2 mb-3">
+            <i class="bi bi-info-circle-fill mt-1 flex-shrink-0"></i>
+            <div class="small">
+              <strong>Instructions:</strong> Use this form if you have taken a leave and have a signed permission letter from the Tutor/HOD.
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Student Register Number</label>
+            <input type="text" class="form-control" value="{{ reg_no }}" readonly />
+          </div>
+
+          <div class="mb-3">
+            <label for="leave_date" class="form-label fw-semibold">
+              Leave Date <span class="text-danger">*</span>
+            </label>
+            <input type="date" id="leave_date" name="leave_date" class="form-control" required />
+          </div>
+
+          <div class="mb-3">
+            <label for="reason" class="form-label fw-semibold">
+              Reason for Leave <span class="text-danger">*</span>
+            </label>
+            <textarea id="reason" name="reason" class="form-control" rows="2"
+                      placeholder="e.g., Medical Emergency, Family Occasion..." required></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label for="leave_letter" class="form-label fw-semibold">
+              Upload Signed Letter <span class="text-danger">*</span>
+            </label>
+            <input type="file" id="leave_letter" name="leave_letter" class="form-control"
+                   accept=".pdf,.jpg,.jpeg,.png" required />
+            <div class="form-text">PDF, JPG, or PNG of the signed permission letter</div>
+          </div>
+
+          <div class="d-flex gap-2 justify-content-end mt-4">
+            <button type="submit" class="btn btn-info text-white fw-bold">
+              <i class="bi bi-cloud-upload me-1"></i> Submit Leave Letter
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-white py-3 fw-semibold">
+        <i class="bi bi-clock-history me-1 text-muted"></i> My Recent Leaves
+      </div>
+      <div class="card-body p-0">
+        <ul class="list-group list-group-flush">
+          {% for leave in recent_leaves %}
+          <li class="list-group-item py-3">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <span class="fw-bold d-block">{{ leave.date }}</span>
+                <span class="text-muted small">{{ leave.reason }}</span>
+              </div>
+              <span class="badge bg-info">Uploaded</span>
+            </div>
+          </li>
+          {% else %}
+          <li class="list-group-item text-center py-5 text-muted">
+            No leave records found.
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

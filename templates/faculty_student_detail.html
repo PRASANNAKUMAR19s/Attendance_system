@@ -11,6 +11,56 @@
             </a>
         </div>
     </div>
+
+    <!-- Face Photos -->
+    <div class="row mb-4">
+        <div class="col-lg-4 mb-3 mb-lg-0">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-images me-2"></i>Face Photos</h5>
+                    <span class="badge bg-primary">{{ photo_filenames|length }}</span>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data" action="{{ url_for('faculty.upload_photo', reg_no=student.reg_no) }}" class="mb-3">
+                        <label for="studentPhotos" class="form-label fw-semibold">Add more images</label>
+                        <input type="file" class="form-control mb-2" id="studentPhotos" name="photos" accept="image/*" multiple>
+                        <button type="submit" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-cloud-upload me-1"></i> Upload Photos
+                        </button>
+                    </form>
+                    <p class="text-muted small mb-0">Upload clearer front, side, and angled images to improve recognition accuracy.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-8">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="bi bi-grid-3x3-gap me-2"></i>Saved Images</h5>
+                </div>
+                <div class="card-body">
+                    {% if photo_filenames %}
+                    <div class="row g-3">
+                        {% for filename in photo_filenames %}
+                        <div class="col-6 col-md-4 col-xl-3">
+                            <div class="border rounded p-2 bg-white h-100">
+                                <img src="{{ url_for('faculty.student_photo', reg_no=student.reg_no, filename=filename) }}"
+                                     alt="{{ student.name }} photo {{ loop.index }}"
+                                     class="img-fluid rounded mb-2" style="aspect-ratio: 1 / 1; object-fit: cover; width: 100%;">
+                                <div class="small text-muted text-truncate">{{ filename }}</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-5">
+                        <i class="bi bi-camera fs-1 d-block mb-2"></i>
+                        No saved face images yet.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
     
     <!-- Student Info -->
     <div class="row mb-4">

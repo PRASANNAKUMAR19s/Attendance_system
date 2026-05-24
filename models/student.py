@@ -19,12 +19,24 @@ class Student:
     """Represents a student record."""
 
     def __init__(self, data: Dict[str, Any]) -> None:
-        self.reg_no: str    = data.get("reg_no", "")
-        self.name: str      = data.get("name", "")
+        self.reg_no: str = data.get("reg_no", "")
+        self.name: str = data.get("name", "")
         self.department: str = data.get("department", "AI&DS")
-        self.year: int      = int(data.get("year", 1))
-        self.email: str     = data.get("email", "")
-        self.phone: str     = data.get("phone", "")
+        self.year: int = int(data.get("year", 1))
+        self.email: str = data.get("email", "")
+        self.phone: str = data.get("phone", "")
+        self.id: int | None = None
+        self.role: str = "student"
+
+    @property
+    def username(self) -> str:
+        """Return the register number in the same shape as User.username."""
+        return self.reg_no
+
+    @property
+    def full_name(self) -> str:
+        """Return the student's display name for portal templates."""
+        return self.name
 
     # ------------------------------------------------------------------
     # Class methods
@@ -56,8 +68,16 @@ class Student:
         if existing:
             raise ValueError(f"Student {reg_no!r} already registered.")
         _svc.add_student(reg_no, name, department, year)
-        return cls({"reg_no": reg_no, "name": name, "department": department,
-                    "year": year, "email": email, "phone": phone})
+        return cls(
+            {
+                "reg_no": reg_no,
+                "name": name,
+                "department": department,
+                "year": year,
+                "email": email,
+                "phone": phone,
+            }
+        )
 
     @classmethod
     def delete(cls, reg_no: str) -> bool:

@@ -19,8 +19,8 @@ from datetime import datetime
 
 app = Flask(__name__)
 
-ATTENDANCE_DIR      = "attendance"
-STUDENTS_FILE       = "students.csv"
+ATTENDANCE_DIR = "attendance"
+STUDENTS_FILE = "students.csv"
 DEFAULTER_THRESHOLD = 75
 
 # ── HTML Template ─────────────────────────────────────────────────────────────
@@ -291,6 +291,7 @@ HTML = """
 </html>
 """
 
+
 # ── Load all students ─────────────────────────────────────────────────────────
 def load_students():
     students = {}
@@ -301,14 +302,16 @@ def load_students():
             students[row["RegNo"].strip()] = row["Name"].strip()
     return students
 
+
 # ── Load all attendance records ───────────────────────────────────────────────
 def load_all_attendance():
-    files  = glob.glob(os.path.join(ATTENDANCE_DIR, "attendance_*.csv"))
+    files = glob.glob(os.path.join(ATTENDANCE_DIR, "attendance_*.csv"))
     frames = []
     for f in sorted(files):
         with open(f, newline="") as fp:
             frames.extend(list(csv.DictReader(fp)))
     return frames
+
 
 # ── Calculate student stats ───────────────────────────────────────────────────
 def get_student_stats(reg_no, records):
@@ -316,21 +319,19 @@ def get_student_stats(reg_no, records):
     if not my_records:
         return None
 
-    dates        = set(r["Date"] for r in records)
-    total_days   = len(dates)
+    dates = set(r["Date"] for r in records)
+    total_days = len(dates)
 
     present_days = set(
-        r["Date"] for r in my_records
+        r["Date"]
+        for r in my_records
         if r["Status"] in ("ON_TIME", "LATE", "Present(Reason)")
     )
-    absent_days  = set(
-        r["Date"] for r in my_records
-        if r["Status"] == "Absent"
-    )
-    late_count   = sum(1 for r in my_records if r["Status"] == "LATE")
-    present      = len(present_days)
-    absent       = len(absent_days)
-    percentage   = round((present / total_days * 100), 1) if total_days > 0 else 0
+    absent_days = set(r["Date"] for r in my_records if r["Status"] == "Absent")
+    late_count = sum(1 for r in my_records if r["Status"] == "LATE")
+    present = len(present_days)
+    absent = len(absent_days)
+    percentage = round((present / total_days * 100), 1) if total_days > 0 else 0
 
     # Days needed to reach 75%
     if percentage < DEFAULTER_THRESHOLD:
@@ -341,7 +342,7 @@ def get_student_stats(reg_no, records):
                 break
             x += 1
         days_needed = x
-        can_miss    = 0
+        can_miss = 0
     else:
         days_needed = 0
         # solve: (present) / (total + x) = 0.75
@@ -353,28 +354,29 @@ def get_student_stats(reg_no, records):
         can_miss = x
 
     return {
-        "total_days" : total_days,
-        "present"    : present,
-        "absent"     : absent,
-        "late"       : late_count,
-        "percentage" : percentage,
+        "total_days": total_days,
+        "present": present,
+        "absent": absent,
+        "late": late_count,
+        "percentage": percentage,
         "days_needed": days_needed,
-        "can_miss"   : can_miss,
+        "can_miss": can_miss,
         "is_defaulter": percentage < DEFAULTER_THRESHOLD,
     }
+
 
 # ── Routes ────────────────────────────────────────────────────────────────────
 @app.route("/", methods=["GET", "POST"])
 def index():
-    now     = datetime.now().strftime("%d %B %Y, %I:%M %p")
-    data    = None
-    error   = None
-    reg_no  = None
+    now = datetime.now().strftime("%d %B %Y, %I:%M %p")
+    data = None
+    error = None
+    reg_no = None
 
     if request.method == "POST":
-        reg_no   = request.form.get("reg_no", "").strip()
+        reg_no = request.form.get("reg_no", "").strip()
         students = load_students()
-        records  = load_all_attendance()
+        records = load_all_attendance()
 
         if not reg_no:
             error = "Please enter your Register Number."
@@ -385,44 +387,43 @@ def index():
             if not stats:
                 error = "No attendance records found for your register number yet."
             else:
-                pct  = stats["percentage"]
+                pct = stats["percentage"]
                 name = students[reg_no]
 
                 if pct >= 85:
                     circle_color = "#2e7d32"
-                    badge_bg     = "#e8f5e9"
-                    badge_color  = "#2e7d32"
-                    status_text  = "✅ Excellent Attendance"
+                    badge_bg = "#e8f5e9"
+                    badge_color = "#2e7d32"
+                    status_text = "✅ Excellent Attendance"
                 elif pct >= 75:
                     circle_color = "#1565c0"
-                    badge_bg     = "#e3f2fd"
-                    badge_color  = "#1565c0"
-                    status_text  = "👍 Good Attendance"
+                    badge_bg = "#e3f2fd"
+                    badge_color = "#1565c0"
+                    status_text = "👍 Good Attendance"
                 elif pct >= 65:
                     circle_color = "#e65100"
-                    badge_bg     = "#fff3e0"
-                    badge_color  = "#e65100"
-                    status_text  = "⚠️ Low Attendance — Needs Improvement"
+                    badge_bg = "#fff3e0"
+                    badge_color = "#e65100"
+                    status_text = "⚠️ Low Attendance — Needs Improvement"
                 else:
                     circle_color = "#c62828"
-                    badge_bg     = "#ffebee"
-                    badge_color  = "#c62828"
-                    status_text  = "❌ Defaulter — Meet Tutor Immediately"
+                    badge_bg = "#ffebee"
+                    badge_color = "#c62828"
+                    status_text = "❌ Defaulter — Meet Tutor Immediately"
 
                 data = {
-                    "name"        : name,
-                    "reg_no"      : reg_no,
-                    "percentage"  : pct,
+                    "name": name,
+                    "reg_no": reg_no,
+                    "percentage": pct,
                     "circle_color": circle_color,
-                    "badge_bg"    : badge_bg,
-                    "badge_color" : badge_color,
-                    "status_text" : status_text,
+                    "badge_bg": badge_bg,
+                    "badge_color": badge_color,
+                    "status_text": status_text,
                     **stats,
                 }
 
-    return render_template_string(HTML,
-                                  data=data, error=error,
-                                  reg_no=reg_no, now=now)
+    return render_template_string(HTML, data=data, error=error, reg_no=reg_no, now=now)
+
 
 # ── Run ───────────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
@@ -433,6 +434,7 @@ if __name__ == "__main__":
     print("  → http://localhost:5000\n")
     print("  Share this link with students on same WiFi:")
     import socket
+
     try:
         ip = socket.gethostbyname(socket.gethostname())
         print(f"  → http://{ip}:5000\n")

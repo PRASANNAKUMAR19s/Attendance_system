@@ -8,7 +8,7 @@ Provides an HTML/browser-based interface for:
   - Student registration with photo capture (13 angles)
   - Admin dashboard (student list, stats)
 
-The REST API (api.py) runs separately on port 5001 and is not affected.
+The REST API is mounted under /api in the same Flask application.
 
 HOW TO RUN:
     python app.py
@@ -22,6 +22,10 @@ ENVIRONMENT VARIABLES (see .env.example):
 
 from __future__ import annotations
 
+# In app.py - add after Firebase is initialized
+from firebase_service import FirebaseService
+from model_loader import ensure_model_files
+
 import logging
 import os
 from datetime import timedelta
@@ -33,6 +37,12 @@ from database import init_db
 from extensions import jwt, limiter
 from routes import api_bp, auth_bp, faculty_bp, student_portal_bp
 
+# Initialize Firebase first
+svc = FirebaseService()
+
+# Then download model files if on cloud
+if svc.use_firebase:
+    ensure_model_files()
 # ---------------------------------------------------------------------------
 # Logging
 # ---------------------------------------------------------------------------
@@ -47,17 +57,18 @@ logger = logging.getLogger(__name__)
 # Application factory
 # ---------------------------------------------------------------------------
 
+
 def create_app() -> Flask:
     """Create and configure the Flask web application."""
     flask_app = Flask(__name__)
 
     # ── Core settings ────────────────────────────────────────────────────────
-    flask_app.config["SECRET_KEY"]            = _config.SECRET_KEY
+    flask_app.config["SECRET_KEY"] = _config.SECRET_KEY
     flask_app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(hours=8)
-    flask_app.config["MAX_CONTENT_LENGTH"]    = _config.MAX_CONTENT_LENGTH
-    flask_app.config["UPLOAD_FOLDER"]         = _config.UPLOAD_FOLDER
-    flask_app.config["WTF_CSRF_ENABLED"]      = True
-    flask_app.config["JWT_SECRET_KEY"]        = _config.JWT_SECRET_KEY
+    flask_app.config["MAX_CONTENT_LENGTH"] = _config.MAX_CONTENT_LENGTH
+    flask_app.config["UPLOAD_FOLDER"] = _config.UPLOAD_FOLDER
+    flask_app.config["WTF_CSRF_ENABLED"] = True
+    flask_app.config["JWT_SECRET_KEY"] = _config.JWT_SECRET_KEY
     flask_app.config["JWT_ACCESS_TOKEN_EXPIRES"] = False
 
     # ── Initialise database ──────────────────────────────────────────────────
@@ -86,23 +97,26 @@ def create_app() -> Flask:
     @flask_app.after_request
     def set_security_headers(response):
         response.headers["X-Content-Type-Options"] = "nosniff"
-        response.headers["X-Frame-Options"]        = "SAMEORIGIN"
-        response.headers["X-XSS-Protection"]       = "1; mode=block"
-        response.headers["Referrer-Policy"]        = "strict-origin-when-cross-origin"
+        response.headers["X-Frame-Options"] = "SAMEORIGIN"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         return response
 
     # ── Error handlers ───────────────────────────────────────────────────────
     @flask_app.errorhandler(404)
     def not_found(e):
         from flask import render_template
-        return render_template("error.html", code=404,
-                               message="Page not found."), 404
+
+        return render_template("error.html", code=404, message="Page not found."), 404
 
     @flask_app.errorhandler(500)
     def server_error(e):
         from flask import render_template
-        return render_template("error.html", code=500,
-                               message="Internal server error."), 500
+
+        return (
+            render_template("error.html", code=500, message="Internal server error."),
+            500,
+        )
 
     return flask_app
 

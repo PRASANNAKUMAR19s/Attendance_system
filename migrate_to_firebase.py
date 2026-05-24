@@ -37,7 +37,9 @@ logger = logging.getLogger(__name__)
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Migrate CSV data to Firebase Firestore")
+    parser = argparse.ArgumentParser(
+        description="Migrate CSV data to Firebase Firestore"
+    )
     parser.add_argument(
         "--dry-run",
         action="store_true",
@@ -60,12 +62,12 @@ def load_students(students_file: str) -> list[dict]:
         for row in csv.DictReader(f):
             records.append(
                 {
-                    "reg_no":     row.get("RegNo", row.get("reg_no", "")).strip(),
-                    "name":       row.get("Name",  row.get("name",  "")).strip(),
+                    "reg_no": row.get("RegNo", row.get("reg_no", "")).strip(),
+                    "name": row.get("Name", row.get("name", "")).strip(),
                     "department": row.get("department", "").strip(),
-                    "year":       row.get("year", "").strip(),
-                    "email":      row.get("email", "").strip(),
-                    "phone":      row.get("phone", "").strip(),
+                    "year": row.get("year", "").strip(),
+                    "email": row.get("email", "").strip(),
+                    "phone": row.get("phone", "").strip(),
                 }
             )
     return records
@@ -79,12 +81,14 @@ def load_attendance(attendance_dir: str) -> list[dict]:
             for row in csv.DictReader(f):
                 records.append(
                     {
-                        "reg_no":      row.get("RegNo",       row.get("reg_no", "")).strip(),
-                        "name":        row.get("Name",        row.get("name",   "")).strip(),
-                        "date":        row.get("Date",        row.get("date",   "")).strip(),
-                        "period":      row.get("Period",      row.get("period", "")).strip(),
-                        "marked_time": row.get("MarkedTime",  row.get("marked_time", "")).strip(),
-                        "status":      row.get("Status",      row.get("status", "")).strip(),
+                        "reg_no": row.get("RegNo", row.get("reg_no", "")).strip(),
+                        "name": row.get("Name", row.get("name", "")).strip(),
+                        "date": row.get("Date", row.get("date", "")).strip(),
+                        "period": row.get("Period", row.get("period", "")).strip(),
+                        "marked_time": row.get(
+                            "MarkedTime", row.get("marked_time", "")
+                        ).strip(),
+                        "status": row.get("Status", row.get("status", "")).strip(),
                     }
                 )
     return records
@@ -99,13 +103,17 @@ def load_late_reasons(reasons_file: str) -> list[dict]:
         for row in csv.DictReader(f):
             records.append(
                 {
-                    "reg_no":     row.get("RegNo",     row.get("reg_no",     "")).strip(),
-                    "name":       row.get("Name",      row.get("name",       "")).strip(),
-                    "date":       row.get("Date",      row.get("date",       "")).strip(),
-                    "period":     row.get("Period",    row.get("period",     "")).strip(),
-                    "reason":     row.get("Reason",    row.get("reason",     "")).strip(),
-                    "updated_by": row.get("UpdatedBy", row.get("updated_by", "")).strip(),
-                    "updated_at": row.get("UpdatedAt", row.get("updated_at", "")).strip(),
+                    "reg_no": row.get("RegNo", row.get("reg_no", "")).strip(),
+                    "name": row.get("Name", row.get("name", "")).strip(),
+                    "date": row.get("Date", row.get("date", "")).strip(),
+                    "period": row.get("Period", row.get("period", "")).strip(),
+                    "reason": row.get("Reason", row.get("reason", "")).strip(),
+                    "updated_by": row.get(
+                        "UpdatedBy", row.get("updated_by", "")
+                    ).strip(),
+                    "updated_at": row.get(
+                        "UpdatedAt", row.get("updated_at", "")
+                    ).strip(),
                 }
             )
     return records
@@ -119,8 +127,7 @@ def migrate_to_firestore(
     dry_run: bool,
 ) -> None:
     """Write all records to Firestore in batches."""
-    from google.cloud.firestore_v1 import WriteBatch  # type: ignore
-
+    # Note: Firestore WriteBatch type removed to avoid optional dependency import at runtime
     BATCH_SIZE = 400  # Firestore max is 500 ops per batch
 
     def flush_batch(batch, count: int, collection: str) -> tuple:
@@ -208,13 +215,15 @@ def main() -> None:
             sys.exit(0)
 
     # ── Load data ──
-    students     = load_students(STUDENTS_FILE)
-    attendance   = load_attendance(ATTENDANCE_DIR)
+    students = load_students(STUDENTS_FILE)
+    attendance = load_attendance(ATTENDANCE_DIR)
     late_reasons = load_late_reasons(LATE_REASONS_FILE)
 
     logger.info(
         "Loaded: %d students, %d attendance records, %d late-reason records",
-        len(students), len(attendance), len(late_reasons),
+        len(students),
+        len(attendance),
+        len(late_reasons),
     )
 
     if args.dry_run:

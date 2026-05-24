@@ -4,18 +4,77 @@
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue)](https://python.org)
 [![Flask](https://img.shields.io/badge/Flask-3.1-green)](https://flask.palletsprojects.com)
 
-Automated Student Attendance Monitoring System using **Face Recognition (LBPH)** + **OpenCV**, with a production-ready **REST API**, **Firebase** integration, **Docker** support, and a modern web portal.
+Automated Student Attendance Monitoring System using **Face Recognition (LBPH + Deep Learning)**, **OpenCV**, **AI Analytics**, **REST API**, **Firebase**, **Docker**, and a modern web portal.
+
+The system automatically detects and recognizes student faces in real time, records attendance, performs behavior analysis, identifies attendance irregularities, generates reports, and sends real-time SMS/Email notifications to parents and faculty members.
 
 ---
 
-## ✨ Features
+# **Objectives**
+
+- Automate student attendance using robust face recognition (LBPH + deep learning).
+- Support partial-face recognition (masks, occlusion) using landmark heuristics and model-based embeddings.
+- Detect and manage late comers automatically, with tutor/HOD workflows for verification.
+- Provide real-time SMS/Email notifications to parents, tutors and administrative staff.
+- Generate daily attendance reports (PDF/CSV) and analytics dashboards; persist data to Firebase when enabled.
+
+
+# **Modules**
+
+- Face Recognition Module (LBPH + optional Deep Learning)
+- Partial Face Recognition Module (eyes / nose / facial geometry heuristics)
+- Attendance Marking Module (ON_TIME / LATE / PRESENT_PARTIAL / ABSENT)
+- Late Comer Detection Module
+- Notification Module (Email + SMS gateway, e.g., Twilio)
+- Report Generation Module (PDF / charts / CSV)
+- REST API & Web Portal (Tutor / Student views)
+- Firebase Integration (optional)
+
+
+# **Proposed System / Flow**
+
+Classroom webcam → Face detection & recognition (LBPH / DL) → If full match, mark ON_TIME/PRESENT; if partial landmarks detected, mark PRESENT_PARTIAL → If detected after grace period mark LATE → Missing detections after period end marked ABSENT (auto) → Notification Module sends SMS/Email to Parents / Tutor / HOD → Reports archived in `attendance/` and `reports/`, optionally synced to Firebase.
+
+
+# **Advantages**
+
+- Real-Time Parent Notification
+- Late Comer Monitoring and Management
+- Partial Face Recognition Support (masks/occlusion)
+- Improved Attendance Security and Audit Trail
+- Automated Reports and Analytics
+
+
+# **PPT Features (for slide updates)**
+
+- Slide 6 (Modules): Add Notification Module, Late Comer Detection Module, Partial Face Recognition Module
+- Slide 7 (System Architecture): Add SMS Gateway, Email Notification Module, Late Comer Detection, Partial Face Recognition
+- Slide 12 (Advantages): Add Real-Time Parent Notification; Late Comer Monitoring; Partial Face Recognition Support; Improved Attendance Security
+
+
+# **Results**
+
+- The system produces daily Present / Absent / Late lists and generates defaulter reports.
+- Notifications are sent automatically for Present, Absent, and Late events.
+- Partial recognitions are recorded as `PRESENT_PARTIAL` and included in reports and analytics.
+- Data and reports are available in `attendance/` and `reports/`, and can be synced to Firebase when enabled.
+
+# 🚀 Features
 
 | Feature | Status |
 |---------|--------|
 | Face Recognition (LBPH) | ✅ |
+| Deep Learning Face Recognition | ✅ |
 | Real-time attendance marking | ✅ |
 | Period-wise tracking (7 periods) | ✅ |
 | Late detection with grace period | ✅ |
+| Partial Face Recognition (mask/occlusion support) | ✅ |
+| AI-Based Student Behavior Analysis | ✅ |
+| High Priority Attendance Alerts | ✅ |
+| Smart Attendance Notification System | ✅ |
+| Automated Present / Absent / OD Reports | ✅ |
+| HOD / Tutor Alert System | ✅ |
+| SMS Notifications (optional Twilio) | ✅ |
 | REST API with Swagger docs | ✅ |
 | JWT authentication | ✅ |
 | Firebase Firestore backend | ✅ |
@@ -32,246 +91,423 @@ Automated Student Attendance Monitoring System using **Face Recognition (LBPH)**
 
 ---
 
-## 🏗️ Architecture
+# 🏗️ Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────────┐
 │                         Attendance System                           │
 │                                                                     │
 │  ┌──────────────┐    ┌──────────────┐    ┌────────────────────┐   │
 │  │  Camera /    │    │  REST API    │    │   Web Portal       │   │
-│  │  OpenCV      │───▶│  (app.py)    │◀──▶│  (app.py) │   │
-│  │  Face Recog. │    │  JWT+Swagger  │    │  Bootstrap 5 UI    │   │
+│  │  OpenCV      │───▶│  (app.py)    │◀──▶│  Bootstrap 5 UI    │   │
+│  │  AI Recog.   │    │ JWT+Swagger  │    │  Tutor + Student   │   │
 │  └──────────────┘    └──────┬───────┘    └────────────────────┘   │
 │                             │                                       │
 │                    ┌────────▼────────┐                              │
-│                    │ FirebaseService  │                              │
+│                    │ FirebaseService │                              │
 │                    └────────┬────────┘                              │
 │                             │                                       │
 │              ┌──────────────┴──────────────┐                       │
 │    ┌─────────▼──────┐          ┌──────────▼────────┐              │
 │    │ Firebase        │          │  Local CSV files   │              │
-│    │ Firestore /     │          │  (default,         │              │
-│    │ Storage / Auth  │          │   no setup needed) │              │
+│    │ Firestore /     │          │  Offline Storage   │              │
+│    │ Storage / Auth  │          │                     │              │
 │    └────────────────┘          └───────────────────┘               │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 🚀 Quick Start
+# 🧠 Deep Learning Face Recognition
 
-### 1. Install
+The system integrates Deep Learning-based Face Recognition techniques to improve recognition accuracy and intelligent facial analysis.
+
+### Capabilities
+- Detect faces under different lighting conditions
+- Handle mask and partial face recognition
+- Analyze multiple face angles and expressions
+- Improve recognition accuracy dynamically
+- Support real-time intelligent facial analysis
+
+### Deep Learning Operations
+1. Capture student image
+2. Preprocess image using OpenCV
+3. Extract facial embeddings using CNN
+4. Compare embeddings with trained dataset
+5. Identify student accurately
+6. Record attendance automatically
+
+### Technologies Used
+- TensorFlow
+- CNN (Convolutional Neural Networks)
+- OpenCV DNN Module
+- Keras
+
+---
+
+# 🤖 AI-Based Student Behavior Analysis
+
+The system continuously monitors student attendance behavior and classroom activity patterns using AI-based analytics.
+
+### Features
+- Continuous absence detection
+- Late comer frequency monitoring
+- Attendance irregularity tracking
+- Student activity analysis
+- Attendance trend monitoring
+- Classroom behavior observation
+
+### High Priority Alert System
+
+If a student remains absent for a long duration and suddenly attends class again, the system automatically generates a HIGH ALERT notification.
+
+The alert is sent to:
+- Tutor
+- HOD
+- Attendance Management Staff
+
+### Example Alert
+"Warning: Student attendance irregularity detected. Immediate academic monitoring recommended."
+
+---
+
+# 📩 Smart Attendance Notification System
+
+The system automatically sends:
+- Present notifications
+- Absent notifications
+- OD updates
+- Late comer alerts
+- Attendance irregularity alerts
+
+### Notification Recipients
+- Parents
+- Tutor
+- HOD
+- Attendance Management Staff
+
+---
+
+## ✅ Present Student Notification
+
+When a student is detected through the webcam and attendance is marked successfully, an automatic notification is sent.
+
+### Example
+"Your son/daughter is present in today’s class."
+
+---
+
+## ✅ Absent Student Notification
+
+If a student is not detected during attendance monitoring, the system automatically sends absence notifications to:
+- Parents
+- Tutor
+- HOD
+- Attendance Management Staff
+
+---
+
+## ✅ OD (On Duty) Monitoring
+
+The system verifies approved OD students separately and updates attendance records automatically to avoid incorrect absence marking.
+
+---
+
+## ✅ Late Comer Detection & Alert
+
+The system identifies students entering the classroom after the scheduled class start time.
+
+Late comer notifications are automatically sent to:
+- Parents
+- Tutor
+- HOD
+- Attendance Management Staff
+
+---
+
+# 📄 Automated Attendance Report Sharing
+
+After attendance completion, the system automatically generates attendance reports and shares them through:
+- SMS
+- Email
+- Digital Dashboard
+
+### Sample Attendance Report
+
+```text
+Class : AI&DS
+Date : 07/01/2026
+Session : Forenoon
+
+Total No. of Students : 58
+No. of Present Students : 52
+No. of Absentees : 6
+
+09. Brammavathi
+18. Imayavarman
+19. Jaiprakash
+40. Pavithra P
+49. Sanjay Aditya
+54. Sriananya
+
+No. of OD Students : 2
+
+51. Shriram
+55. Sridhar
+
+Late Comer List : Automatically Generated
+```
+
+---
+
+# 📊 Attendance Analytics
+
+The system provides:
+- Attendance percentage calculation
+- Present/Absent analysis
+- Late comer analysis
+- Attendance dashboard visualization
+- CSV data storage
+- Graphical report generation
+- Attendance trend analysis
+- Student behavior reports
+- Attendance prediction analytics
+- Risk student identification
+
+---
+
+# 🚀 Quick Start
+
+## 1. Install
 
 ```bash
 git clone https://github.com/PRASANNAKUMAR19s/Attendance_system.git
 cd Attendance_system
 python -m venv .venv
-source .venv/bin/activate   # Windows: .venv\Scripts\activate
+source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env        # Edit .env with your settings
-```
-
-### 2. Run web portal
-
-```bash
-python app.py
-# → http://localhost:5000
-```
-
-### 3. Run REST API
-
-```bash
-python app.py
-# → http://localhost:5000
-# → Swagger docs: http://localhost:5000/api/docs
-```
-
-### 4. Face recognition pipeline
-
-```bash
-python 1_dataset_collector.py   # Capture face images
-python 2_train_model.py         # Train LBPH model
-python 3_face_recognition.py    # Start attendance marking
-python 4_attendance_report.py   # Generate reports
+cp .env.example .env
 ```
 
 ---
 
-## 🔌 REST API
-
-### Authentication
+## 2. Run the Web App
 
 ```bash
-# Get JWT token
-curl -X POST http://localhost:5000/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"username": "tutor", "password": "paavai123"}'
-
-# Use token
-curl http://localhost:5000/api/students/ \
-  -H "Authorization: Bearer <your-token>"
+python app.py
 ```
 
-### Endpoints
+Open:
+```text
+http://localhost:5000
+```
+
+### Portal Login
+
+- Tutor / HOD / admin users sign in with the normal portal login.
+- Student users can sign in with their register number as both the username and password for the current demo workflow.
+- After login, the app redirects automatically to the correct dashboard for that role.
+
+### Automatic Web Workflow
+
+Once the app is open, the main attendance flow happens from the web pages:
+
+1. Log in as tutor, HOD, admin, or student.
+2. Open the dashboard for the role.
+3. Capture or review attendance records.
+4. Automatically mark present, late, absent, or partial-face cases.
+5. Send SMS/Email notifications when attendance events are recorded.
+6. Generate reports, summaries, and defaulter lists from the portal.
+
+The web portal is the day-to-day control center for attendance operations. Dataset collection and model training remain separate setup tasks.
+
+---
+
+## 3. Face Recognition Pipeline
+
+Use these only for initial setup, dataset creation, or retraining:
+
+```bash
+python 1_dataset_collector.py
+python 2_train_model.py
+python 3_face_recognition.py
+python 4_attendance_report.py
+```
+
+---
+
+# 🔌 REST API
+
+## Authentication
+
+```bash
+curl -X POST http://localhost:5000/api/auth/login \
+-H "Content-Type: application/json" \
+-d '{"username":"tutor","password":"paavai123"}'
+```
+
+---
+
+## API Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/health/` | Health check (no auth) |
-| POST | `/api/auth/login` | Get JWT token |
-| GET/POST | `/api/students/` | List / add students |
-| GET/PUT/DELETE | `/api/students/{reg_no}` | Student CRUD |
-| GET | `/api/students/search?q=` | Search students |
-| GET/POST | `/api/attendance/` | Get / mark attendance |
-| GET | `/api/attendance/today` | Today's attendance |
-| GET | `/api/attendance/summary/{reg_no}` | Student summary |
-| GET/POST | `/api/attendance/late-reasons` | Late reasons |
-| GET | `/api/reports/summary` | Summary report |
-| GET | `/api/analytics/overview` | Advanced analytics |
-| GET | `/api/analytics/periods` | Configured periods |
-
-Full docs at: `http://localhost:5000/api/docs`
+| GET | `/api/health/` | Health Check |
+| POST | `/api/auth/login` | Get JWT Token |
+| GET/POST | `/api/students/` | Student CRUD |
+| GET/POST | `/api/attendance/` | Attendance Operations |
+| GET | `/api/attendance/today` | Today Attendance |
+| GET | `/api/reports/summary` | Summary Report |
+| GET | `/api/analytics/overview` | Attendance Analytics |
 
 ---
 
-## 🔥 Firebase Setup
+# 🔥 Firebase Setup
 
-1. Create a Firebase project at https://console.firebase.google.com
-2. Enable Firestore, Storage, and Authentication
-3. Download `serviceAccountKey.json` (Project Settings → Service Accounts)
-4. Deploy security rules: `firebase deploy --only firestore:rules,storage`
-5. Set in `.env`:
-   ```env
-   USE_FIREBASE=true
-   FIREBASE_CREDENTIALS_PATH=serviceAccountKey.json
-   FIREBASE_STORAGE_BUCKET=your-project.appspot.com
-   ```
-6. Migrate existing data:
-   ```bash
-   python migrate_to_firebase.py --dry-run   # preview
-   python migrate_to_firebase.py             # run
-   ```
-
----
-
-## 🐳 Docker Deployment
+1. Create Firebase Project
+2. Enable Firestore & Storage
+3. Download `serviceAccountKey.json`
+4. Configure `.env`
+5. Run migration script
 
 ```bash
-docker compose up --build    # start all services
-# API: http://localhost:5000
-# Web: http://localhost:5000
-docker compose down          # stop
+python migrate_to_firebase.py
 ```
 
 ---
 
-## ☁️ Cloud Deployment
+# 🐳 Docker Deployment
 
-### Render.com
-1. Connect GitHub repo on https://render.com
-2. Build command: `pip install -r requirements.txt`
-3. Start command: `gunicorn -w 4 -b 0.0.0.0:$PORT app:app`
-4. Add environment variables from `.env.example`
-
-### AWS EC2
 ```bash
-sudo apt update && sudo apt install -y docker.io docker-compose-plugin
-git clone https://github.com/PRASANNAKUMAR19s/Attendance_system.git
-cd Attendance_system && cp .env.example .env
-docker compose up -d
-```
-
-### Google Cloud Run
-```bash
-gcloud builds submit --tag gcr.io/YOUR_PROJECT/attendance-system
-gcloud run deploy attendance-system --image gcr.io/YOUR_PROJECT/attendance-system \
-  --platform managed --allow-unauthenticated --port 5000
+docker compose up --build
+docker compose down
 ```
 
 ---
 
-## ⚙️ Configuration
+# ☁️ Cloud Deployment
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `SECRET_KEY` | (required) | Flask secret key |
-| `JWT_SECRET_KEY` | (required) | JWT signing key |
-| `TUTOR_USERNAME` | `tutor` | Login username |
-| `TUTOR_PASSWORD` | `paavai123` | Plain password (dev only) |
-| `TUTOR_PASSWORD_HASH` | `""` | bcrypt hash (production) |
-| `USE_FIREBASE` | `false` | Enable Firebase backend |
-| `FIREBASE_CREDENTIALS_PATH` | `serviceAccountKey.json` | Credentials file |
-| `FIREBASE_STORAGE_BUCKET` | `""` | Storage bucket name |
-| `CONFIDENCE_THRESHOLD` | `70` | Face recognition confidence |
-| `DEFAULTER_THRESHOLD` | `75` | Minimum attendance % |
+## Render.com
 
-Generate bcrypt hash:
 ```bash
-python -c "import bcrypt; print(bcrypt.hashpw(b'your_password', bcrypt.gensalt()).decode())"
+Build Command:
+pip install -r requirements.txt
+```
+
+```bash
+Start Command:
+gunicorn -w 4 -b 0.0.0.0:$PORT app:app
 ```
 
 ---
 
-## 🧪 Testing
+# ⚙️ Configuration
+
+| Variable | Description |
+|----------|-------------|
+| SECRET_KEY | Flask Secret Key |
+| JWT_SECRET_KEY | JWT Signing Key |
+| USE_FIREBASE | Enable Firebase |
+| FIREBASE_STORAGE_BUCKET | Storage Bucket |
+| CONFIDENCE_THRESHOLD | Recognition Accuracy |
+| DEFAULTER_THRESHOLD | Minimum Attendance % |
+
+---
+
+# 🧪 Testing
 
 ```bash
 pytest tests/ -v
-pytest tests/test_app.py -v       # API tests
-pytest tests/test_config.py -v    # Unit tests
 ```
 
 ---
 
-## 🔐 Security
+# 🔐 Security Features
 
-- Passwords hashed with **bcrypt**
-- **JWT tokens** protect all API endpoints
-- **Rate limiting** (10 login attempts/min)
-- **Security headers** on all responses
-- **Input validation** with length limits
-- **Firebase Rules** for least-privilege access
-- **Non-root Docker** user in production
-
-### Production Checklist
-
-- [ ] Set strong random `SECRET_KEY` and `JWT_SECRET_KEY`
-- [ ] Set `TUTOR_PASSWORD_HASH` (bcrypt)
-- [ ] Set `FLASK_DEBUG=false`
-- [ ] Use HTTPS (Nginx reverse proxy)
-- [ ] Deploy Firebase security rules
-- [ ] Add `serviceAccountKey.json` to `.gitignore`
+- JWT Authentication
+- bcrypt Password Hashing
+- Rate Limiting
+- Security Headers
+- Firebase Security Rules
+- Input Validation
+- Non-root Docker User
 
 ---
 
-## 📁 Project Structure
+# 📁 Project Structure
 
-```
+```text
 Attendance_system/
-├── app.py                      # REST API (Flask-RESTX + JWT)
-├── firebase_service.py         # Firebase / CSV service layer
-├── config.py                   # Configuration (env-variable aware)
-├── migrate_to_firebase.py      # CSV → Firebase migration script
-├── firestore.rules             # Firebase Firestore security rules
-├── storage.rules               # Firebase Storage security rules
-├── 1_dataset_collector.py      # Capture student face images
-├── 2_train_model.py            # Train LBPH model
-├── 3_face_recognition.py       # Real-time attendance marking
-├── 4_attendance_report.py      # Generate reports & charts
-├── 5_tutor_portal.py           # CLI tutor portal
-├── 6_send_report.py            # PDF generation & email
-├── 7_student_portal.py         # Student web portal
-├── 8_web_portal.py             # Combined web portal
-├── Dockerfile                  # Docker build instructions
-├── docker-compose.yml          # Multi-service Docker setup
-├── requirements.txt            # Python dependencies
-├── .env.example                # Environment variable template
-├── .github/workflows/ci.yml    # GitHub Actions CI/CD
-└── tests/                      # Test suite
+├── app.py
+├── firebase_service.py
+├── config.py
+├── migrate_to_firebase.py
+├── 1_dataset_collector.py
+├── 2_train_model.py
+├── 3_face_recognition.py
+├── 4_attendance_report.py
+├── 5_tutor_portal.py
+├── 6_send_report.py
+├── 7_student_portal.py
+├── 8_web_portal.py
+├── 9_behavior_analysis.py
+├── 10_notification_system.py
+├── 11_deepface_recognition.py
+├── Dockerfile
+├── docker-compose.yml
+├── requirements.txt
+├── tests/
+└── .github/workflows/
 ```
 
 ---
 
-## 👨‍💻 Author
+# 🎯 Advantages
 
-**Prasannakumar S** — Paavai Engineering College, AI & Data Science  
+- Reduces manual attendance workload
+- Prevents proxy attendance
+- Improves attendance accuracy
+- Supports Deep Learning recognition
+- Supports partial face recognition
+- Provides AI-based analytics
+- Generates automatic reports
+- Supports institutional monitoring
+- Improves parent communication
+- Real-time attendance alerts
+
+---
+
+# 🌍 Applications
+
+- Schools
+- Colleges
+- Universities
+- Coaching Centers
+- Smart Campus Systems
+- Training Institutions
+
+---
+
+# 🔮 Future Scope
+
+- Mobile Application Integration
+- ERP Integration
+- Multi-Classroom Monitoring
+- AI-Based Emotion Detection
+- Smart Classroom Automation
+
+---
+
+# 👨‍💻 Author
+
+**Prasannakumar S**  
+Paavai Engineering College  
+Department of Artificial Intelligence and Data Science
+
 Research Intern | Face Recognition & Attendance Automation
+
+---
+
+# 📜 License
+
+This project is developed for educational and research purposes.

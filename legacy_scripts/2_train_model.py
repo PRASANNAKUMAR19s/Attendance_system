@@ -4,19 +4,21 @@ import os
 import csv
 from PIL import Image
 
-DATASET_DIR  = "dataset"
-TRAINER_DIR  = "trainer"
+DATASET_DIR = "dataset"
+TRAINER_DIR = "trainer"
 TRAINER_FILE = "trainer/trainer.yml"
-NAME_MAP     = "name_map.csv"
+NAME_MAP = "name_map.csv"
+
 
 def get_images_and_labels():
     face_samples = []
-    ids          = []
-    name_to_id   = {}
-    current_id   = 1
+    ids = []
+    name_to_id = {}
+    current_id = 1
 
     student_folders = [
-        f for f in os.listdir(DATASET_DIR)
+        f
+        for f in os.listdir(DATASET_DIR)
         if os.path.isdir(os.path.join(DATASET_DIR, f))
     ]
 
@@ -37,8 +39,8 @@ def get_images_and_labels():
             if not img_file.lower().endswith((".jpg", ".jpeg", ".png")):
                 continue
             img_path = os.path.join(folder_path, img_file)
-            pil_img  = Image.open(img_path).convert("L")
-            img_arr  = np.array(pil_img, dtype=np.uint8)
+            pil_img = Image.open(img_path).convert("L")
+            img_arr = np.array(pil_img, dtype=np.uint8)
             face_samples.append(img_arr)
             ids.append(student_id)
             print(f"  [LOADED] {student_name} → {img_file}")
@@ -51,6 +53,7 @@ def get_images_and_labels():
 
     print(f"\n  [SAVED] Name map → {NAME_MAP}")
     return face_samples, ids
+
 
 def train_model():
     os.makedirs(TRAINER_DIR, exist_ok=True)
@@ -70,6 +73,7 @@ def train_model():
     print(f"          Images    : {len(faces)}")
     print(f"          Saved to  : {TRAINER_FILE}")
     print("\n[NEXT] Run:  python 3_face_recognition.py\n")
+
 
 if __name__ == "__main__":
     train_model()

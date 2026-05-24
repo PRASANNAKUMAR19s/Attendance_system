@@ -12,11 +12,11 @@ import os
 import shutil
 import random
 
-DATASET_DIR = os.path.join(os.path.dirname(__file__), '..', 'dataset')
-TRAIN_DIR = os.path.join(DATASET_DIR, 'train')
-TEST_DIR = os.path.join(DATASET_DIR, 'test')
+DATASET_DIR = os.path.join(os.path.dirname(__file__), "..", "dataset")
+TRAIN_DIR = os.path.join(DATASET_DIR, "train")
+TEST_DIR = os.path.join(DATASET_DIR, "test")
 
-IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.bmp', '.pgm'}
+IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".bmp", ".pgm"}
 TRAIN_RATIO = 0.8
 RANDOM_SEED = 42
 
@@ -68,7 +68,7 @@ def prepare_split():
         train_images = images[:split_idx]
         test_images = images[split_idx:]
 
-        for subset, imgs in (('train', train_images), ('test', test_images)):
+        for subset, imgs in (("train", train_images), ("test", test_images)):
             dest = os.path.join(dataset_dir, subset, student)
             os.makedirs(dest, exist_ok=True)
             for img in imgs:
@@ -78,15 +78,19 @@ def prepare_split():
 
         total_train += len(train_images)
         total_test += len(test_images)
-        print(f"{student:<30} {len(images):>7} {len(train_images):>7} {len(test_images):>7}")
+        print(
+            f"{student:<30} {len(images):>7} {len(train_images):>7} {len(test_images):>7}"
+        )
 
     print("-" * 55)
-    print(f"{'TOTAL':<30} {total_train + total_test:>7} {total_train:>7} {total_test:>7}")
+    print(
+        f"{'TOTAL':<30} {total_train + total_test:>7} {total_train:>7} {total_test:>7}"
+    )
     print(f"\nTrain folder : {train_dir}")
     print(f"Test folder  : {test_dir}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     prepare_split()
 from pathlib import Path
 import random
@@ -97,63 +101,64 @@ TRAIN_DIR = DATASET_DIR / "train"
 TEST_DIR = DATASET_DIR / "test"
 TRAIN_SPLIT = 0.8  # 80% training, 20% testing
 
+
 def prepare_dataset():
     """Split dataset into train/test folders"""
-    
+
     # Create directories
     TRAIN_DIR.mkdir(parents=True, exist_ok=True)
     TEST_DIR.mkdir(parents=True, exist_ok=True)
-    
+
     print("Starting dataset preparation...")
     print(f"Source: {DATASET_DIR}")
     print(f"Train: {TRAIN_DIR}")
     print(f"Test: {TEST_DIR}")
     print()
-    
+
     total_images = 0
     train_images = 0
     test_images = 0
-    
+
     # Iterate through student folders
     for student_folder in DATASET_DIR.iterdir():
-        if not student_folder.is_dir() or student_folder.name in ['train', 'test']:
+        if not student_folder.is_dir() or student_folder.name in ["train", "test"]:
             continue
-        
+
         student_id = student_folder.name
         print(f"Processing: {student_id}")
-        
+
         # Get all images
         images = [f for f in student_folder.iterdir() if f.is_file()]
-        
+
         if not images:
             print(f"  ⚠️  No images found")
             continue
-        
+
         # Shuffle and split
         random.shuffle(images)
         split_index = int(len(images) * TRAIN_SPLIT)
         train_images_list = images[:split_index]
         test_images_list = images[split_index:]
-        
+
         # Create student directories
         train_student_dir = TRAIN_DIR / student_id
         test_student_dir = TEST_DIR / student_id
         train_student_dir.mkdir(parents=True, exist_ok=True)
         test_student_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # Copy training images
         for img in train_images_list:
             shutil.copy2(img, train_student_dir / img.name)
             train_images += 1
-        
+
         # Copy test images
         for img in test_images_list:
             shutil.copy2(img, test_student_dir / img.name)
             test_images += 1
-        
+
         total_images += len(images)
         print(f"  ✅ {len(train_images_list)} train | {len(test_images_list)} test")
-    
+
     print()
     print("=" * 50)
     print("Dataset Preparation Complete!")
@@ -164,6 +169,7 @@ def prepare_dataset():
     print()
     print(f"✅ Train folder: {TRAIN_DIR}")
     print(f"✅ Test folder: {TEST_DIR}")
+
 
 if __name__ == "__main__":
     prepare_dataset()

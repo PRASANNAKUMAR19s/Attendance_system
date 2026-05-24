@@ -29,14 +29,12 @@ import logging
 import os
 import re
 from datetime import datetime, timezone
-from functools import wraps
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict
 
 import bcrypt
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import (
     create_access_token,
-    get_jwt_identity,
     jwt_required,
 )
 from flask_restx import Api, Namespace, Resource, fields
@@ -46,10 +44,7 @@ from extensions import limiter
 from config import (
     ATTENDANCE_DIR,
     DEFAULTER_THRESHOLD,
-    JWT_SECRET_KEY,
     PERIODS,
-    SECRET_KEY,
-    STUDENTS_FILE,
     TUTOR_PASSWORD_HASH,
     TUTOR_USERNAME,
 )
@@ -68,7 +63,6 @@ logger = logging.getLogger(__name__)
 # Flask app setup
 # ---------------------------------------------------------------------------
 api_bp = Blueprint("api_bp", __name__)
-
 
 
 # ---------------------------------------------------------------------------
@@ -105,19 +99,19 @@ api = Api(
 # ---------------------------------------------------------------------------
 # Namespaces
 # ---------------------------------------------------------------------------
-ns_auth       = Namespace("auth",       description="Authentication endpoints")
-ns_students   = Namespace("students",   description="Student management")
+ns_auth = Namespace("auth", description="Authentication endpoints")
+ns_students = Namespace("students", description="Student management")
 ns_attendance = Namespace("attendance", description="Attendance operations")
-ns_reports    = Namespace("reports",    description="Report generation")
-ns_analytics  = Namespace("analytics",  description="Advanced analytics")
-ns_health     = Namespace("health",     description="Health check")
+ns_reports = Namespace("reports", description="Report generation")
+ns_analytics = Namespace("analytics", description="Advanced analytics")
+ns_health = Namespace("health", description="Health check")
 
-api.add_namespace(ns_auth,       path="/auth")
-api.add_namespace(ns_students,   path="/students")
+api.add_namespace(ns_auth, path="/auth")
+api.add_namespace(ns_students, path="/students")
 api.add_namespace(ns_attendance, path="/attendance")
-api.add_namespace(ns_reports,    path="/reports")
-api.add_namespace(ns_analytics,  path="/analytics")
-api.add_namespace(ns_health,     path="/health")
+api.add_namespace(ns_reports, path="/reports")
+api.add_namespace(ns_analytics, path="/analytics")
+api.add_namespace(ns_health, path="/health")
 
 # ---------------------------------------------------------------------------
 # Swagger models
@@ -141,23 +135,23 @@ token_model = ns_auth.model(
 student_model = ns_students.model(
     "Student",
     {
-        "reg_no":     fields.String(required=True, example="622123207042"),
-        "name":       fields.String(required=True, example="PRASANNAKUMAR S"),
+        "reg_no": fields.String(required=True, example="622123207042"),
+        "name": fields.String(required=True, example="PRASANNAKUMAR S"),
         "department": fields.String(example="AI&DS"),
-        "year":       fields.Integer(example=3),
-        "email":      fields.String(example="student@paavai.edu.in"),
-        "phone":      fields.String(example="+91-9876543210"),
+        "year": fields.Integer(example=3),
+        "email": fields.String(example="student@paavai.edu.in"),
+        "phone": fields.String(example="+91-9876543210"),
     },
 )
 
 attendance_model = ns_attendance.model(
     "AttendanceRecord",
     {
-        "reg_no":      fields.String(required=True),
-        "name":        fields.String(),
-        "date":        fields.String(example="2026-03-29"),
-        "period":      fields.String(example="Period 1"),
-        "status":      fields.String(example="ON_TIME"),
+        "reg_no": fields.String(required=True),
+        "name": fields.String(),
+        "date": fields.String(example="2026-03-29"),
+        "period": fields.String(example="Period 1"),
+        "status": fields.String(example="ON_TIME"),
         "marked_time": fields.String(example="09:18:00"),
     },
 )
@@ -165,22 +159,22 @@ attendance_model = ns_attendance.model(
 mark_attendance_model = ns_attendance.model(
     "MarkAttendance",
     {
-        "reg_no":  fields.String(required=True),
-        "name":    fields.String(required=True),
-        "date":    fields.String(example="2026-03-29"),
-        "period":  fields.String(required=True, example="Period 1"),
-        "status":  fields.String(required=True, example="ON_TIME"),
+        "reg_no": fields.String(required=True),
+        "name": fields.String(required=True),
+        "date": fields.String(example="2026-03-29"),
+        "period": fields.String(required=True, example="Period 1"),
+        "status": fields.String(required=True, example="ON_TIME"),
     },
 )
 
 late_reason_model = ns_attendance.model(
     "LateReason",
     {
-        "reg_no":     fields.String(required=True),
-        "name":       fields.String(required=True),
-        "date":       fields.String(example="2026-03-29"),
-        "period":     fields.String(required=True),
-        "reason":     fields.String(required=True),
+        "reg_no": fields.String(required=True),
+        "name": fields.String(required=True),
+        "date": fields.String(example="2026-03-29"),
+        "period": fields.String(required=True),
+        "reason": fields.String(required=True),
         "updated_by": fields.String(example="Tutor"),
     },
 )
@@ -189,13 +183,12 @@ late_reason_model = ns_attendance.model(
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _verify_password(plain: str, stored_hash: str) -> bool:
     """Verify a bcrypt-hashed password.  Falls back to plain comparison."""
     if stored_hash:
         try:
-            return bcrypt.checkpw(
-                plain.encode("utf-8"), stored_hash.encode("utf-8")
-            )
+            return bcrypt.checkpw(plain.encode("utf-8"), stored_hash.encode("utf-8"))
         except Exception:
             return False
     # No hash stored → compare plain text (development fallback)
@@ -291,12 +284,12 @@ class StudentList(Resource):
         data = request.get_json(silent=True) or {}
         try:
             reg_no = _validate_str(data.get("reg_no", ""), "reg_no", 20)
-            name   = _validate_str(data.get("name", ""),   "name",   100)
+            name = _validate_str(data.get("name", ""), "name", 100)
         except ValueError as exc:
             api.abort(400, str(exc))
 
-        dept  = str(data.get("department", ""))[:100]
-        year  = int(data.get("year", 0))
+        dept = str(data.get("department", ""))[:100]
+        year = int(data.get("year", 0))
         email = str(data.get("email", ""))[:254]
         phone = str(data.get("phone", ""))[:20]
 
@@ -353,12 +346,17 @@ class Student(Resource):
 @ns_attendance.route("/")
 class AttendanceList(Resource):
     @jwt_required()
-    @ns_attendance.doc(params={"date": "Filter by date (YYYY-MM-DD)", "reg_no": "Filter by student reg no"})
+    @ns_attendance.doc(
+        params={
+            "date": "Filter by date (YYYY-MM-DD)",
+            "reg_no": "Filter by student reg no",
+        }
+    )
     @ns_attendance.marshal_list_with(attendance_model)
     def get(self):
         """Retrieve attendance records (requires JWT)."""
         raw_date = request.args.get("date")
-        reg_no   = request.args.get("reg_no")
+        reg_no = request.args.get("reg_no")
         try:
             date = _validate_date(raw_date) if raw_date else None
         except ValueError as exc:
@@ -373,11 +371,15 @@ class AttendanceList(Resource):
         data = request.get_json(silent=True) or {}
         try:
             reg_no = _validate_str(data.get("reg_no", ""), "reg_no", 20)
-            name   = _validate_str(data.get("name", ""),   "name",   100)
-            period = _validate_str(data.get("period", ""), "period",  50)
-            status = _validate_str(data.get("status", ""), "status",  20)
+            name = _validate_str(data.get("name", ""), "name", 100)
+            period = _validate_str(data.get("period", ""), "period", 50)
+            status = _validate_str(data.get("status", ""), "status", 20)
             raw_date = data.get("date")
-            date = _validate_date(raw_date) if raw_date else datetime.now().strftime("%Y-%m-%d")
+            date = (
+                _validate_date(raw_date)
+                if raw_date
+                else datetime.now().strftime("%Y-%m-%d")
+            )
         except ValueError as exc:
             api.abort(400, str(exc))
 
@@ -401,7 +403,7 @@ class LateReasonList(Resource):
     def get(self):
         """Get late-reason records (requires JWT)."""
         raw_date = request.args.get("date")
-        reg_no   = request.args.get("reg_no")
+        reg_no = request.args.get("reg_no")
         try:
             date = _validate_date(raw_date) if raw_date else None
         except ValueError as exc:
@@ -415,11 +417,15 @@ class LateReasonList(Resource):
         data = request.get_json(silent=True) or {}
         try:
             reg_no = _validate_str(data.get("reg_no", ""), "reg_no", 20)
-            name   = _validate_str(data.get("name", ""),   "name",   100)
-            period = _validate_str(data.get("period", ""), "period",  50)
-            reason = _validate_str(data.get("reason", ""), "reason",  500)
+            name = _validate_str(data.get("name", ""), "name", 100)
+            period = _validate_str(data.get("period", ""), "period", 50)
+            reason = _validate_str(data.get("reason", ""), "reason", 500)
             raw_date = data.get("date")
-            date = _validate_date(raw_date) if raw_date else datetime.now().strftime("%Y-%m-%d")
+            date = (
+                _validate_date(raw_date)
+                if raw_date
+                else datetime.now().strftime("%Y-%m-%d")
+            )
         except ValueError as exc:
             api.abort(400, str(exc))
 
@@ -437,10 +443,8 @@ class ReportList(Resource):
     def get(self):
         """List available report dates (requires JWT)."""
         import glob as globmod
-        import config as _cfg
-        files = sorted(
-            globmod.glob(os.path.join(_cfg.ATTENDANCE_DIR, "attendance_*.csv"))
-        )
+
+        files = sorted(globmod.glob(os.path.join(ATTENDANCE_DIR, "attendance_*.csv")))
         dates = [
             os.path.basename(f).replace("attendance_", "").replace(".csv", "")
             for f in files
@@ -451,7 +455,9 @@ class ReportList(Resource):
 @ns_reports.route("/summary")
 class ReportSummary(Resource):
     @jwt_required()
-    @ns_reports.doc(params={"date": "Date for the report (YYYY-MM-DD); omit for all dates"})
+    @ns_reports.doc(
+        params={"date": "Date for the report (YYYY-MM-DD); omit for all dates"}
+    )
     def get(self):
         """
         Generate an attendance summary report (requires JWT).
@@ -478,15 +484,15 @@ class ReportSummary(Resource):
         summary = []
         for rn, total in totals.items():
             pres = present.get(rn, 0)
-            pct  = round(pres / total * 100, 2) if total else 0.0
+            pct = round(pres / total * 100, 2) if total else 0.0
             summary.append(
                 {
-                    "reg_no":      rn,
-                    "name":        students.get(rn, "Unknown"),
-                    "present":     pres,
-                    "absent":      total - pres,
-                    "total":       total,
-                    "percentage":  pct,
+                    "reg_no": rn,
+                    "name": students.get(rn, "Unknown"),
+                    "present": pres,
+                    "absent": total - pres,
+                    "total": total,
+                    "percentage": pct,
                     "is_defaulter": pct < DEFAULTER_THRESHOLD,
                 }
             )
@@ -533,8 +539,8 @@ class AnalyticsOverview(Resource):
 
         for r in records:
             period = r.get("period", "Unknown")
-            date   = r.get("date",   "Unknown")
-            rn     = r.get("reg_no", "")
+            date = r.get("date", "Unknown")
+            rn = r.get("reg_no", "")
             status = r.get("status", "").upper()
             is_present = status in ("ON_TIME", "LATE", "PRESENT")
 
@@ -565,18 +571,22 @@ class AnalyticsOverview(Resource):
         ]
         top_absentees = sorted(
             [
-                {"reg_no": rn, "name": student_map.get(rn, "Unknown"), "absent_count": cnt}
+                {
+                    "reg_no": rn,
+                    "name": student_map.get(rn, "Unknown"),
+                    "absent_count": cnt,
+                }
                 for rn, cnt in student_absent.items()
             ],
             key=lambda x: -x["absent_count"],
         )[:10]
 
         return {
-            "total_students":  len(students),
-            "total_records":   len(records),
-            "period_stats":    period_stats,
-            "daily_stats":     daily_stats,
-            "top_absentees":   top_absentees,
+            "total_students": len(students),
+            "total_records": len(records),
+            "period_stats": period_stats,
+            "daily_stats": daily_stats,
+            "top_absentees": top_absentees,
         }
 
 
@@ -588,10 +598,10 @@ class AnalyticsPeriods(Resource):
         return {
             "periods": [
                 {
-                    "name":  p[0],
+                    "name": p[0],
                     "start": p[1],
                     "late_after": p[2],
-                    "end":   p[3],
+                    "end": p[3],
                 }
                 for p in PERIODS
             ]
@@ -620,7 +630,8 @@ class StudentSearch(Resource):
         if not query:
             return []
         return [
-            s for s in svc.get_students()
+            s
+            for s in svc.get_students()
             if query in s.get("name", "").lower()
             or query in s.get("reg_no", "").lower()
         ]
@@ -633,13 +644,25 @@ class StudentSearch(Resource):
 def not_found(e):
     return jsonify({"success": False, "error": "Endpoint not found"}), 404
 
+
 @api_bp.app_errorhandler(405)
 def method_not_allowed(e):
     return jsonify({"success": False, "error": "Method not allowed"}), 405
 
+
 @api_bp.app_errorhandler(429)
 def ratelimit_handler(e):
-    return jsonify({"success": False, "error": "Rate limit exceeded", "retry_after": str(e.description)}), 429
+    return (
+        jsonify(
+            {
+                "success": False,
+                "error": "Rate limit exceeded",
+                "retry_after": str(e.description),
+            }
+        ),
+        429,
+    )
+
 
 @api_bp.app_errorhandler(500)
 def internal_error(e):

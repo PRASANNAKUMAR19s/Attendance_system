@@ -11,10 +11,8 @@ Run with:
 from __future__ import annotations
 
 import csv
-import json
 import os
 import tempfile
-from typing import Generator
 
 import pytest
 
@@ -39,11 +37,11 @@ def patch_paths(tmp_dir):
     """Redirect file-system paths to the temp directory."""
     import config as cfg
 
-    cfg.ATTENDANCE_DIR    = os.path.join(tmp_dir, "attendance")
-    cfg.STUDENTS_FILE     = os.path.join(tmp_dir, "students.csv")
+    cfg.ATTENDANCE_DIR = os.path.join(tmp_dir, "attendance")
+    cfg.STUDENTS_FILE = os.path.join(tmp_dir, "students.csv")
     cfg.LATE_REASONS_FILE = os.path.join(tmp_dir, "late_reasons.csv")
-    cfg.REPORTS_DIR       = os.path.join(tmp_dir, "reports")
-    cfg.USE_FIREBASE      = False
+    cfg.REPORTS_DIR = os.path.join(tmp_dir, "reports")
+    cfg.USE_FIREBASE = False
 
     os.makedirs(cfg.ATTENDANCE_DIR, exist_ok=True)
     os.makedirs(cfg.REPORTS_DIR, exist_ok=True)
@@ -60,6 +58,7 @@ def patch_paths(tmp_dir):
 def flask_app():
     """Create the Flask test application."""
     from app import create_app
+
     app = create_app()
     app.config["TESTING"] = True
     app.config["WTF_CSRF_ENABLED"] = False
@@ -196,8 +195,8 @@ class TestAttendance:
             "/api/attendance/",
             json={
                 "reg_no": "622123207001",
-                "name":   "TEST STUDENT A",
-                "date":   "2026-01-01",
+                "name": "TEST STUDENT A",
+                "date": "2026-01-01",
                 "period": "Period 1",
                 "status": "ON_TIME",
             },
@@ -229,17 +228,13 @@ class TestAttendance:
         assert all(r["date"] == "2026-01-01" for r in body)
 
     def test_get_attendance_by_reg_no(self, client, auth_headers):
-        resp = client.get(
-            "/api/attendance/?reg_no=622123207001", headers=auth_headers
-        )
+        resp = client.get("/api/attendance/?reg_no=622123207001", headers=auth_headers)
         assert resp.status_code == 200
         body = resp.get_json()
         assert all(r["reg_no"] == "622123207001" for r in body)
 
     def test_student_summary(self, client, auth_headers):
-        resp = client.get(
-            "/api/attendance/summary/622123207001", headers=auth_headers
-        )
+        resp = client.get("/api/attendance/summary/622123207001", headers=auth_headers)
         assert resp.status_code == 200
         body = resp.get_json()
         assert "percentage" in body
@@ -254,8 +249,8 @@ class TestAttendance:
             "/api/attendance/late-reasons",
             json={
                 "reg_no": "622123207001",
-                "name":   "TEST STUDENT A",
-                "date":   "2026-01-01",
+                "name": "TEST STUDENT A",
+                "date": "2026-01-01",
                 "period": "Period 1",
                 "reason": "Medical appointment",
             },
