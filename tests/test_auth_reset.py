@@ -25,6 +25,8 @@ def app():
     web.config["TESTING"] = True
     web.config["WTF_CSRF_ENABLED"] = False
     return web
+
+
 def test_forgot_and_reset_flow(client):
     # Create a student user within the application context
     from models.user import User

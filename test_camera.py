@@ -11,4 +11,7 @@ if ret and frame is not None:
 else:
     print("No frame captured")
 cap.release()
-sys.exit(0)
+
+if __name__ == "__main__":
+    # When run as a script show camera diagnostics, but avoid exiting during test collection
+    sys.exit(0)

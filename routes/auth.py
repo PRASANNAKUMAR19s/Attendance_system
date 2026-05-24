@@ -21,8 +21,6 @@ from urllib.parse import urlsplit
 
 from models.user import User
 from services.email_service import EmailService
-import logging
-from datetime import datetime
 from urllib.parse import urljoin
 
 logger = logging.getLogger(__name__)

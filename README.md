@@ -298,6 +298,26 @@ python app.py
 ```
 
 Open:
+
+## Student Credentials & Notifications
+
+- Student accounts are created by the faculty registration workflow and an email "set password" link is sent when an email is provided.
+- Passwords are stored hashed with `bcrypt`. Password reset tokens are one-time and expire (configurable).
+- Notifications (Email + SMS) are sent via `services/notification_service.py` which uses `services/email_service.py` and `services/sms_service.py`.
+- For CI and offline runs, tests automatically mock email/SMS sends via `tests/conftest.py`.
+
+## Running Tests in CI
+
+- Unit and integration tests live under `tests/`. The suite avoids external network calls by mocking email and SMS in `tests/conftest.py`.
+- To run tests locally:
+
+```bash
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+python -m pytest tests -q
+```
+
 ```text
 http://localhost:5000
 ```
