@@ -430,7 +430,14 @@ class EmailService:
                 .container {{ max-width: 640px; margin: 0 auto; padding: 20px; }}
                 .header {{ background: #0066cc; color: white; padding: 20px; text-align: center; }}
                 .content {{ padding: 24px; background: #f9f9f9; }}
-                .button {{ display: inline-block; background: #0066cc; color: white !important; text-decoration: none; padding: 12px 20px; border-radius: 6px; }}
+                .button {{
+                    display: inline-block;
+                    background: #0066cc;
+                    color: white !important;
+                    text-decoration: none;
+                    padding: 12px 20px;
+                    border-radius: 6px;
+                }}
                 .footer {{ text-align: center; padding: 20px; color: #666; font-size: 12px; }}
                 .details {{ background: white; padding: 16px; border-radius: 6px; margin: 16px 0; }}
             </style>
